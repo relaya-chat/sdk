@@ -1,12 +1,22 @@
 {
   "name": "@relaya-chat/react",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "description": "Drop-in community chat component for React apps — real-time, moderated, WebSocket-based. Connects to the Relaya SaaS at api.relaya.chat. Embed with one line or go headless with hooks.",
   "keywords": [
-    "chat", "real-time", "realtime", "community-chat", "react",
-    "react-component", "websocket", "moderation", "live", "ugc",
-    "embeddable", "radio", "component-library"
+    "chat",
+    "real-time",
+    "realtime",
+    "community-chat",
+    "react",
+    "react-component",
+    "websocket",
+    "moderation",
+    "live",
+    "ugc",
+    "embeddable",
+    "radio",
+    "component-library"
   ],
   "license": "MIT",
   "repository": {
@@ -31,7 +41,11 @@
     },
     "./styles": "./dist/relaya.css"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch",
