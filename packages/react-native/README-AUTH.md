@@ -1,4 +1,4 @@
-# Authentication — @relaya/react-native
+# Authentication — @relaya-chat/react-native
 
 ## What Relaya does for you
 
@@ -62,7 +62,7 @@ const tokenStorage = {
 ### 2. Mount the component
 
 ```tsx
-import { RelayaChat } from '@relaya/react-native';
+import { RelayaChat } from '@relaya-chat/react-native';
 
 function ChatScreen() {
   return (

@@ -1,4 +1,4 @@
-# Authentication — @relaya/react
+# Authentication — @relaya-chat/react
 
 ## What Relaya does for you
 
@@ -18,8 +18,8 @@ Relaya uses a **short-lived access token + rotating refresh token** model. Your 
 ### 1. Mount the component
 
 ```tsx
-import { RelayaChat } from '@relaya/react';
-import '@relaya/react/styles';
+import { RelayaChat } from '@relaya-chat/react';
+import '@relaya-chat/react/styles';
 
 function MyPage() {
   return (

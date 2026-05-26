@@ -1,8 +1,8 @@
 // Copyright (c) 2026 JAB Ventures, Inc. MIT License.
 // See LICENSE file at https://github.com/relaya-chat/sdk
-// @relaya/react — public SDK entry point
+// @relaya-chat/react — public SDK entry point
 
-// ── Styles (bundled into dist/relaya.css; imported by consumers via @relaya/react/styles) ──
+// ── Styles (bundled into dist/relaya.css; imported by consumers via @relaya-chat/react/styles) ──
 import './styles/main.css';
 
 // ── Style utilities ────────────────────────────────────────────────────────

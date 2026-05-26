@@ -7,7 +7,7 @@
  *   - token (Bearer JWT, URI-encoded) — omitted for anonymous connections
  *   - station (space slug, URI-encoded)
  *
- * This is an internal utility; not part of the public @relaya/react-native API.
+ * This is an internal utility; not part of the public @relaya-chat/react-native API.
  */
 
 export function buildRnWsUrl(

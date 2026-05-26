@@ -1,4 +1,4 @@
-# Contributing to @relaya/react
+# Contributing to @relaya-chat/react
 
 Thank you for your interest in contributing to Relaya. Contributions are welcome — bug reports, documentation improvements, and pull requests all help make the SDK better.
 
@@ -53,7 +53,7 @@ For anything beyond a small documentation fix:
 
 ## Development Setup
 
-This repository is a monorepo containing the `@relaya/react` package. To get started:
+This repository is a monorepo containing the `@relaya-chat/react` package. To get started:
 
 ```bash
 # Install dependencies

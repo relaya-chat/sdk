@@ -3,13 +3,13 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
 /**
- * Vite config for @relaya/react — library mode build.
+ * Vite config for @relaya-chat/react — library mode build.
  *
  * Produces two entry points:
  *   dist/index.js / dist/index.cjs  — main chat component and headless hooks
  *   dist/admin.js                   — admin panel (loaded only in admin popup window)
  *
- * CSS is extracted to dist/relaya.css (imported via "@relaya/react/styles").
+ * CSS is extracted to dist/relaya.css (imported via "@relaya-chat/react/styles").
  *
  * React and react-dom are peer dependencies and are not bundled.
  */

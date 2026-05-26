@@ -1,7 +1,7 @@
 // Copyright (c) 2026 JAB Ventures, Inc. MIT License.
 // See LICENSE file at https://github.com/relaya-chat/sdk
 /**
- * @relaya/react-native — public API surface
+ * @relaya-chat/react-native — public API surface
  *
  * Headless hooks and utilities for building Relaya chat in React Native / Expo.
  * No UI components are exported — host apps render their own native components

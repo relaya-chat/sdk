@@ -1,10 +1,10 @@
-# @relaya/react
+# @relaya-chat/react
 
 **Community chat for creators and platforms. Embed a fully moderated, real-time chat box on any website or app — no backend required.**
 
 ```tsx
-import { RelayaChat } from '@relaya/react';
-import '@relaya/react/styles';
+import { RelayaChat } from '@relaya-chat/react';
+import '@relaya-chat/react/styles';
 
 export default function CommunityPage() {
   return (
@@ -31,8 +31,8 @@ Stop scattering your audience across Discord or WhatsApp groups you don't contro
 | Path | Who it's for |
 |---|---|
 | **iframe embed** | Creators on Wix, Squarespace, WordPress — copy, paste, done |
-| **`@relaya/react`** | Web developers who want a React component, not an iframe |
-| **`@relaya/react-native`** | Mobile developers who need App Store-compliant UGC |
+| **`@relaya-chat/react`** | Web developers who want a React component, not an iframe |
+| **`@relaya-chat/react-native`** | Mobile developers who need App Store-compliant UGC |
 
 One subscription covers all three. Pick your path, start in minutes.
 
@@ -54,7 +54,7 @@ Report, ban, and delete tools on every plan, from day one. No upgrade required f
 
 ### 🧩 From iframe to SDK. One product.
 
-Copy-paste an iframe onto your Wix site. Drop `@relaya/react` into your Next.js app. Ship a React Native mobile app with App Store–compliant chat. One subscription, every integration path.
+Copy-paste an iframe onto your Wix site. Drop `@relaya-chat/react` into your Next.js app. Ship a React Native mobile app with App Store–compliant chat. One subscription, every integration path.
 
 ### 🎨 Custom branding
 
@@ -85,7 +85,7 @@ Auth uses short-lived tokens in memory + rotating refresh tokens in `sessionStor
 ## Installation
 
 ```bash
-npm install @relaya/react
+npm install @relaya-chat/react
 ```
 
 **Peer dependencies:** React 18+
@@ -108,8 +108,8 @@ Create a free account at [relaya.chat](https://relaya.chat) and set up your firs
 ### 2. Drop in the component
 
 ```tsx
-import { RelayaChat } from '@relaya/react';
-import '@relaya/react/styles';
+import { RelayaChat } from '@relaya-chat/react';
+import '@relaya-chat/react/styles';
 
 export default function CommunityPage() {
   return (
@@ -136,7 +136,7 @@ import {
   MessageInput,
   useRelayaAuth,
   useRelayaChat
-} from '@relaya/react';
+} from '@relaya-chat/react';
 ```
 
 The hooks handle all state, connection management, and auth token refresh. The components accept `className` overrides for custom styling. See the [component reference](https://relaya.chat/docs/react) for the full API.

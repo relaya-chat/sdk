@@ -52,16 +52,22 @@ export default function ChatScreen() {
 
 ## Features
 
-- **Real-time messaging** via WebSocket
-- **OTP authentication** — email-based, no passwords
-- **Moderation** — ban management, message deletion, report review
+- **Real-time messaging** via WebSocket — auto-reconnects on network drops, no polling
+- **OTP authentication** — email-based one-time codes, no passwords, 33-day sessions
+- **Moderation built in** — ban management, message deletion, report review — included on every plan
 - **Admin panel** — built-in moderator UI (React package)
-- **Theming** — CSS custom properties, light/dark mode
+- **Custom sticker sets** — upload your own stickers for on-brand community expression
+- **Chat history & export** — configurable archive up to 180 days, CSV export, searchable from admin
+- **Custom branding** — visual theme editor, CSS custom properties, light/dark mode
+- **Country & IP controls** — country allowlist/blocklist and IP ban tools for compliance and abuse management
+- **No-cookie architecture** — tokens in memory + `sessionStorage`; no cookie-consent banner; works in cross-origin iframes
+- **App Store compliant** — built to satisfy Apple's UGC guidelines from day one
+- **Three integration paths** — iframe embed (no-code), React component, React Native hooks — one subscription covers all
 - **TypeScript** — fully typed, strict mode
 
 ## Getting a Space
 
-Sign up at [relaya.chat](https://relaya.chat) to create a space (your chat community) and get a `spaceSlug` and API credentials.
+Sign up at [relaya.chat](https://relaya.chat) to create a space (your chat community) and get a `spaceSlug` and API credentials. 15-day free trial, no credit card required.
 
 ## Documentation
 
