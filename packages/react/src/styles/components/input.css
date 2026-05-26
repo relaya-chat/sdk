@@ -1,0 +1,269 @@
+/* ============================================================
+   Message Input & Sticker Components
+   MessageInput bar, sticker picker, sticker suggestions
+   ============================================================ */
+
+/* ── Message Input Bar ─────────────────────────────────────── */
+.relaya-root .message-input-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-top: 1px solid var(--relaya-color-border);
+  background: var(--relaya-color-surface);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.relaya-root .sticker-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--relaya-color-border);
+  background: var(--relaya-color-surface-2);
+  color: var(--relaya-color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.relaya-root .sticker-btn:hover:not(:disabled) {
+  background: var(--relaya-color-surface);
+  color: var(--relaya-color-text);
+}
+
+.relaya-root .sticker-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.relaya-root .message-input {
+  flex: 1;
+  min-height: 36px;
+  max-height: 120px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--relaya-color-border);
+  border-radius: var(--relaya-radius-bubble);
+  background: var(--relaya-color-input-bg);
+  color: var(--relaya-color-input-text);
+  font-size: var(--relaya-font-size-base);
+  font-family: var(--sp-msg-font);
+  resize: none;
+  line-height: 1.4;
+  transition: border-color 0.15s;
+  overflow-y: auto;
+}
+
+.relaya-root .message-input:focus {
+  outline: none;
+  border-color: var(--relaya-color-accent);
+}
+
+.relaya-root .message-input::placeholder {
+  color: var(--relaya-color-text-faint);
+}
+
+.relaya-root .message-input:disabled {
+  opacity: 0.55;
+}
+
+.relaya-root .send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--relaya-color-btn-bg);
+  color: var(--relaya-color-btn-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.relaya-root .send-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.relaya-root .send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Sticker Picker ────────────────────────────────────────── */
+.relaya-root .sticker-picker__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 170;
+}
+
+.relaya-root .sticker-picker {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--input-height) + var(--spacing-md));
+  transform: translateX(-50%);
+  width: min(92vw, 920px);
+  max-height: min(70vh, 620px);
+  border: 1px solid var(--relaya-color-border);
+  border-radius: var(--relaya-radius-lg);
+  background: var(--relaya-color-surface);
+  box-shadow: 0 10px 32px var(--relaya-color-shadow);
+  z-index: 171;
+  display: flex;
+  flex-direction: column;
+}
+
+.relaya-root .sticker-picker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--relaya-color-border);
+  font-size: var(--relaya-font-size-sm);
+  font-weight: 600;
+}
+
+.relaya-root .sticker-picker__close {
+  min-width: 28px;
+  min-height: 28px;
+}
+
+.relaya-root .sticker-picker__body {
+  overflow-y: auto;
+  padding: var(--spacing-md);
+}
+
+.relaya-root .sticker-picker__state {
+  color: var(--relaya-color-text-muted);
+  font-size: var(--relaya-font-size-sm);
+  padding: var(--spacing-lg) var(--spacing-sm);
+}
+
+.relaya-root .sticker-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.relaya-root .sticker-picker__item {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--relaya-color-border);
+  border-radius: var(--relaya-radius-md);
+  background: var(--relaya-color-surface-2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs);
+}
+
+.relaya-root .sticker-picker__item:hover {
+  border-color: var(--relaya-color-accent);
+  background: var(--relaya-color-surface);
+}
+
+.relaya-root .sticker-picker__item img {
+  max-width: 100%;
+  max-height: calc(100% - 20px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.relaya-root .sticker-picker__item-label {
+  font-size: var(--relaya-font-size-xs);
+  color: var(--relaya-color-text-muted);
+  line-height: 1.2;
+}
+
+.relaya-root .sticker-suggestions {
+  position: absolute;
+  left: 56px;
+  right: 52px;
+  bottom: calc(100% + 8px);
+  background: var(--relaya-color-surface);
+  border: 1px solid var(--relaya-color-border);
+  border-radius: var(--relaya-radius-md);
+  box-shadow: 0 8px 24px var(--relaya-color-shadow);
+  display: flex;
+  flex-direction: column;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 175;
+}
+
+.relaya-root .sticker-suggestions__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+}
+
+.relaya-root .sticker-suggestions__item:hover {
+  background: var(--relaya-color-surface-2);
+}
+
+.relaya-root .sticker-suggestions__item img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.relaya-root .sticker-suggestions__code {
+  font-size: var(--relaya-font-size-sm);
+  color: var(--relaya-color-text);
+}
+
+/* ── @mention Suggestion Strip ─────────────────────────────── */
+.relaya-root .mention-suggestions {
+  position: absolute;
+  left: 56px;
+  bottom: calc(100% + 8px);
+  background: var(--relaya-color-surface);
+  border: 1px solid var(--relaya-color-border);
+  border-radius: var(--relaya-radius-md);
+  box-shadow: 0 8px 24px var(--relaya-color-shadow);
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 175;
+}
+
+.relaya-root .mention-suggestions__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  font-size: var(--relaya-font-size-sm);
+}
+
+.relaya-root .mention-suggestions__item:hover,
+.relaya-root .mention-suggestions__item--highlighted {
+  background: var(--relaya-color-surface-2);
+}
+
+.relaya-root .mention-suggestions__at {
+  color: var(--relaya-color-accent);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.relaya-root .mention-suggestions__name {
+  color: var(--relaya-color-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,41 @@
+/* ============================================================
+   Reset & Base Styles
+   Box model, typography, form elements
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* SDK scope root - fills whatever container the host provides */
+.relaya-root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--sp-ui-font);
+  font-size: var(--relaya-font-size-base);
+  color: var(--relaya-color-text);
+  background: var(--relaya-color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+input, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}

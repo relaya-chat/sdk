@@ -1,0 +1,78 @@
+/* ============================================================
+   Layout - App Shell & Grid Structures
+   Main layout containers and structural elements
+   ============================================================ */
+
+.relaya-root .app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--relaya-color-bg);
+}
+
+.relaya-root .chat-window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--relaya-color-surface);
+}
+
+.relaya-root .chat-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-md);
+  height: var(--header-height);
+  background: var(--sp-title-bg);
+  border-bottom: 1px solid color-mix(in srgb, var(--relaya-color-border) 40%, transparent);
+  flex-shrink: 0;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.relaya-root .chat-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.relaya-root .message-list-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.relaya-root .message-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md) var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  scroll-behavior: smooth;
+}
+
+.relaya-root .message-list::-webkit-scrollbar {
+  width: 6px;
+}
+.relaya-root .message-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.relaya-root .message-list::-webkit-scrollbar-thumb {
+  background: var(--relaya-color-border);
+  border-radius: 3px;
+}
+
+.relaya-root .loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--relaya-color-text-muted);
+  font-size: var(--relaya-font-size-sm);
+  gap: var(--spacing-sm);
+}

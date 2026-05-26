@@ -1,0 +1,108 @@
+/* ============================================================
+   User Components
+   UserList sidebar, UserListModal, avatars
+   ============================================================ */
+
+/* ── User List / Sidebar ───────────────────────────────────── */
+.relaya-root .user-list {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  border-left: 1px solid var(--relaya-color-border);
+  background: var(--relaya-color-surface-2);
+  overflow-y: auto;
+  display: none;
+  flex-direction: column;
+  padding: var(--spacing-md);
+  gap: var(--spacing-sm);
+}
+
+.relaya-root .user-list__title {
+  font-size: var(--relaya-font-size-xs);
+  font-weight: 600;
+  color: var(--relaya-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--relaya-color-border);
+}
+
+.relaya-root .user-list__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs);
+  border-radius: var(--relaya-radius-sm);
+  font-size: var(--relaya-font-size-sm);
+}
+
+.relaya-root .user-list__avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--sp-avatar-bg);
+  color: var(--sp-avatar-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--relaya-font-size-xs);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.relaya-root .user-list__name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--relaya-color-text);
+}
+
+.relaya-root .user-list__self-badge {
+  font-size: var(--relaya-font-size-xs);
+  color: var(--relaya-color-text-faint);
+}
+
+/* ── Pane Divider (draggable resize handle) ─────────────────── */
+.relaya-root .pane-divider {
+  display: none;
+  width: 5px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  background: var(--relaya-color-border);
+  transition: background 0.15s ease;
+}
+
+.relaya-root .pane-divider:hover {
+  background: var(--relaya-color-text-faint);
+}
+
+/* ── User List Modal ───────────────────────────────────────── */
+.relaya-root .user-list-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.relaya-root .user-list-modal__body {
+  max-height: 50vh;
+  overflow-y: auto;
+  margin-bottom: 0;
+  padding-right: var(--spacing-xs);
+}
+
+.relaya-root .user-list-modal__item {
+  padding: var(--spacing-xs) 0;
+}
+
+.relaya-root .user-list-modal__close {
+  font-size: var(--relaya-font-size-sm);
+  color: var(--relaya-color-text-muted);
+  padding: var(--spacing-xs);
+}
+
+.relaya-root .user-list-modal__close:hover {
+  color: var(--relaya-color-text);
+  background: var(--relaya-color-surface-2);
+  border-radius: var(--relaya-radius-sm);
+}

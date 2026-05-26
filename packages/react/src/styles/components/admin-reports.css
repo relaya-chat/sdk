@@ -1,0 +1,139 @@
+/* ── Report Review Panel ───────────────────────────────────── */
+.relaya-root .report-review {
+  border-top: 1px solid var(--relaya-color-border);
+  background: var(--relaya-color-surface-2);
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.relaya-root .report-review__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--relaya-font-size-sm);
+  font-weight: 500;
+  color: var(--relaya-color-text-muted);
+  width: 100%;
+  padding: 0;
+}
+
+.relaya-root .report-review__toggle:hover {
+  color: var(--relaya-color-text);
+}
+
+.relaya-root .report-review__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: var(--spacing-sm);
+  border-radius: 9px;
+  background: var(--relaya-color-danger);
+  color: #ffffff;
+  font-size: var(--relaya-font-size-xs);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.relaya-root .report-review__panel {
+  margin-top: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.relaya-root .report-review__loading,
+.relaya-root .report-review__empty {
+  font-size: var(--relaya-font-size-sm);
+  color: var(--relaya-color-text-muted);
+  padding: var(--spacing-sm) 0;
+}
+
+.relaya-root .report-review__error {
+  font-size: var(--relaya-font-size-sm);
+  color: var(--relaya-color-danger);
+  padding: var(--spacing-sm) 0;
+}
+
+.relaya-root .report-card {
+  background: var(--relaya-color-surface);
+  border: 1px solid var(--relaya-color-border);
+  border-radius: var(--relaya-radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.relaya-root .report-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.relaya-root .report-card__reason {
+  font-size: var(--relaya-font-size-xs);
+  font-weight: 600;
+  text-transform: capitalize;
+  color: var(--relaya-color-text-muted);
+  background: color-mix(in srgb, var(--relaya-color-warning) 15%, transparent);
+  border-radius: var(--relaya-radius-sm);
+  padding: 1px 6px;
+}
+
+.relaya-root .report-card__time {
+  font-size: var(--relaya-font-size-xs);
+  color: var(--relaya-color-text-faint);
+  flex-shrink: 0;
+}
+
+.relaya-root .report-card__message {
+  font-size: var(--relaya-font-size-sm);
+  color: var(--relaya-color-text);
+  line-height: 1.4;
+  word-break: break-word;
+  padding: var(--spacing-xs) 0;
+  border-top: 1px solid var(--relaya-color-border);
+  border-bottom: 1px solid var(--relaya-color-border);
+}
+
+.relaya-root .report-card__deleted {
+  color: var(--relaya-color-text-muted);
+}
+
+.relaya-root .report-card__details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--relaya-font-size-xs);
+  color: var(--relaya-color-text-muted);
+}
+
+.relaya-root .report-card__details strong {
+  color: var(--relaya-color-text);
+}
+
+.relaya-root .report-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  padding-top: var(--spacing-xs);
+}
+
+.relaya-root .report-review__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-xs);
+}
+
+.relaya-root .report-review__page-info {
+  font-size: var(--relaya-font-size-xs);
+  color: var(--relaya-color-text-muted);
+}
+

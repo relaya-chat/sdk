@@ -1,0 +1,47 @@
+/* ============================================================
+   Moderation Components
+   AdminSettings, ReportReview, BanManagement, StickerAdmin
+   ============================================================ */
+
+/* ── Admin Panel (full-page admin window) ───────────────────── */
+.relaya-root .admin-panel {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--relaya-color-bg);
+}
+
+.relaya-root .admin-panel__header {
+  padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
+  border-bottom: 1px solid var(--relaya-color-border);
+  background: var(--relaya-color-surface);
+}
+
+.relaya-root .admin-panel__title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--relaya-color-text);
+  margin: 0;
+}
+
+.relaya-root .admin-panel__subtitle {
+  font-size: var(--relaya-font-size-sm);
+  color: var(--relaya-color-text-muted);
+  margin: var(--spacing-xs) 0 0;
+}
+
+/* admin-panel__sections uses natural block flow; parent .admin-panel scrolls */
+
+.relaya-root .admin-panel__loading,
+.relaya-root .admin-panel__unauthorized {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--spacing-md);
+  color: var(--relaya-color-text-muted);
+  font-size: var(--relaya-font-size-sm);
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+

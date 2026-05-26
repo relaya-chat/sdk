@@ -1,0 +1,130 @@
+/**
+ * OTP Code Input Component Styles
+ */
+
+.relaya-root .otp-code-input {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.relaya-root .otp-code-input__icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.relaya-root .otp-code-input__title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--relaya-color-text);
+  text-align: center;
+}
+
+.relaya-root .otp-code-input__hint {
+  margin: 0;
+  font-size: 14px;
+  color: var(--relaya-color-text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.relaya-root .otp-code-input__hint strong {
+  color: var(--relaya-color-text);
+  font-weight: 500;
+}
+
+.relaya-root .otp-code-input__field {
+  width: 100%;
+  max-width: 240px;
+  padding: 16px 12px;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.5em;
+  text-align: center;
+  border: 2px solid var(--relaya-color-border);
+  border-radius: 8px;
+  background: var(--relaya-color-surface);
+  color: var(--relaya-color-text);
+  font-family: 'Courier New', Courier, monospace;
+  transition: all 0.2s ease;
+  /* Prevent zoom on iOS when focusing */
+  font-size: max(16px, 28px);
+}
+
+/* Mobile optimization */
+@media (max-width: 600px) {
+  .relaya-root .otp-code-input__field {
+    font-size: 24px;
+    padding: 14px 10px;
+    letter-spacing: 0.4em;
+  }
+}
+
+.relaya-root .otp-code-input__field:focus {
+  outline: none;
+  border-color: var(--relaya-color-accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.relaya-root .otp-code-input__field:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.relaya-root .otp-code-input__field::placeholder {
+  opacity: 0.3;
+}
+
+.relaya-root .otp-code-input__error {
+  padding: 12px 16px;
+  background: rgba(255, 59, 48, 0.1);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  border-radius: 6px;
+  color: #ff3b30;
+  font-size: 14px;
+  text-align: center;
+  width: 100%;
+}
+
+.relaya-root .otp-code-input__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Mobile: stack buttons vertically for easier tapping */
+@media (max-width: 400px) {
+  .relaya-root .otp-code-input__actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .relaya-root .otp-code-input__actions .btn {
+    width: 100%;
+  }
+}
+
+.relaya-root .otp-code-input__auto-submit {
+  margin: 0;
+  font-size: 13px;
+  color: var(--relaya-color-text-muted);
+  font-style: italic;
+}
+
+/* Auth modal error message (for email input stage) */
+.relaya-root .auth-modal__error {
+  padding: 12px 16px;
+  background: rgba(255, 59, 48, 0.1);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  border-radius: 6px;
+  color: #ff3b30;
+  font-size: 14px;
+  text-align: center;
+  width: 100%;
+  margin-top: 8px;
+}

@@ -1,0 +1,83 @@
+/* ── Admin Settings ────────────────────────────────────────── */
+.relaya-root .admin-settings {
+  border-top: 1px solid var(--relaya-color-border);
+  background: var(--relaya-color-surface-2);
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.relaya-root .admin-settings__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--relaya-font-size-sm);
+  font-weight: 500;
+  color: var(--relaya-color-text-muted);
+  width: 100%;
+  padding: 0;
+}
+
+.relaya-root .admin-settings__toggle:hover {
+  color: var(--relaya-color-text);
+}
+
+.relaya-root .admin-settings__panel {
+  margin-top: var(--spacing-md);
+}
+
+.relaya-root .admin-settings__section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.relaya-root .admin-settings__section-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--relaya-font-size-xs);
+  color: var(--relaya-color-text-muted);
+}
+
+.relaya-root .admin-settings__section-copy strong {
+  font-size: var(--relaya-font-size-sm);
+  color: var(--relaya-color-text);
+}
+
+.relaya-root .admin-settings__notice {
+  font-size: var(--relaya-font-size-xs);
+  color: var(--relaya-color-text);
+  background: color-mix(in srgb, var(--relaya-color-warning) 15%, transparent);
+  border-left: 3px solid var(--relaya-color-warning);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--relaya-radius-sm);
+  margin-bottom: var(--spacing-md);
+  line-height: 1.4;
+}
+
+.relaya-root .admin-settings__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.relaya-root .admin-settings__field label {
+  display: block;
+  font-size: var(--relaya-font-size-xs);
+  font-weight: 500;
+  color: var(--relaya-color-text-muted);
+  margin-bottom: var(--spacing-xs);
+}
+
+.relaya-root .admin-settings__field input {
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--relaya-color-border);
+  border-radius: var(--relaya-radius-sm);
+  background: var(--relaya-color-surface);
+  color: var(--relaya-color-text);
+  font-size: var(--relaya-font-size-sm);
+}
+

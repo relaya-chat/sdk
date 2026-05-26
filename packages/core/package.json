@@ -1,0 +1,37 @@
+{
+  "name": "@relaya-chat/core",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Real-time community chat primitives for Relaya — TypeScript types, REST API client, WebSocket connection manager. Connects to the Relaya SaaS at api.relaya.chat. Works in browser and React Native.",
+  "keywords": [
+    "chat", "real-time", "realtime", "community-chat", "websocket",
+    "api-client", "typescript", "react-native", "moderation"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/relaya-chat/sdk.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://relaya.chat",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "vitest": "^4.1.2"
+  }
+}

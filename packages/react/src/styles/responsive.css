@@ -1,0 +1,123 @@
+/* ============================================================
+   Responsive Styles
+   Media queries for compact (<600px), standard (600-1024px), wide (>1024px)
+   ============================================================ */
+
+/* ── Desktop: Show user list sidebar and resize handle ─────── */
+@media (min-width: 768px) {
+  .relaya-root .user-list {
+    display: flex;
+  }
+
+  .relaya-root .pane-divider {
+    display: block;
+  }
+}
+
+/* ── Narrow header: ≤479px (typical Wix sidebar / mobile embed) ── */
+@media (max-width: 479px) {
+  .relaya-root .chat-header__signout {
+    display: none;
+  }
+
+  .relaya-root .chat-name-btn {
+    max-width: 80px;
+  }
+}
+
+/* ── Mobile: <600px ────────────────────────────────────────── */
+@media (max-width: 599px) {
+  .relaya-root .message-item {
+    max-width: 95%;
+  }
+
+  .relaya-root .chat-header {
+    padding: 0 var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+
+  .relaya-root .message-list {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .relaya-root .message-input-bar {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  /* Larger touch targets on mobile */
+  .relaya-root .send-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .relaya-root .sticker-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .relaya-root .sticker-picker {
+    width: min(96vw, 560px);
+    bottom: calc(var(--input-height) + var(--spacing-sm));
+    max-height: 62vh;
+  }
+
+  .relaya-root .sticker-suggestions {
+    left: var(--spacing-md);
+    right: var(--spacing-md);
+    bottom: calc(100% + 6px);
+  }
+
+  .relaya-root .sticker-picker__grid {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  }
+
+  .relaya-root .btn--icon {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  /* On mobile, kebab menu is shown instead of hover actions */
+  .relaya-root .message-item__kebab-btn {
+    display: inline-flex;
+  }
+
+  .relaya-root .sticker-admin-page {
+    padding: var(--spacing-md);
+  }
+
+  .relaya-root .sticker-admin-page__topbar,
+  .relaya-root .admin-settings__section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .relaya-root .sticker-admin-page__header-actions {
+    width: 100%;
+  }
+
+  .relaya-root .sticker-admin-page__header-actions .btn {
+    flex: 1;
+  }
+
+  /* Auth modal - full screen on mobile */
+  .relaya-root .auth-modal {
+    padding: 0;
+  }
+
+  .relaya-root .auth-modal__content {
+    max-width: none;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    justify-content: center;
+    padding: var(--spacing-xl) var(--spacing-lg);
+  }
+
+  .relaya-root .auth-modal__buttons {
+    flex-direction: column-reverse;
+  }
+
+  .relaya-root .auth-modal__buttons .btn {
+    width: 100%;
+  }
+}

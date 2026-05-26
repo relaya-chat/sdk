@@ -1,0 +1,47 @@
+/**
+ * Message editing styles
+ */
+
+.relaya-root .message-item__edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--relaya-color-surface-2);
+  border-radius: 8px;
+}
+
+.relaya-root .message-item__edit-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 8px;
+  border: 1px solid var(--relaya-color-border);
+  border-radius: 4px;
+  background: var(--relaya-color-surface);
+  color: var(--relaya-color-text);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.relaya-root .message-item__edit-textarea:focus {
+  outline: 2px solid var(--relaya-color-accent);
+  outline-offset: 1px;
+}
+
+.relaya-root .message-item__edit-error {
+  font-size: 12px;
+  color: var(--relaya-color-error, #e74c3c);
+  padding: 4px 0;
+}
+
+.relaya-root .message-item__edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.relaya-root .message-item__edit-actions .btn {
+  min-width: 60px;
+}

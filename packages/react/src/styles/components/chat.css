@@ -1,0 +1,598 @@
+/* ============================================================
+   Chat Components
+   ChatWindow header, MessageList, MessageItem, avatars
+   ============================================================ */
+
+/* ── Mention Chips (in message bubbles) ───────────────────── */
+.relaya-root .mention-chip {
+  display: inline;
+  background: var(--relaya-color-surface-2);
+  border: 1px solid var(--relaya-color-message-own-bg);
+  border-radius: var(--relaya-radius-sm);
+  padding: 0 4px;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--relaya-color-message-own-bg);
+  white-space: nowrap;
+}
+
+/* Self-mention: use own-bubble colour so it visually matches the sender's bubbles */
+.relaya-root .mention-chip--self {
+  background: var(--relaya-color-message-own-bg);
+  border-color: var(--relaya-color-message-own-bg);
+  color: var(--sp-own-msg-text);
+}
+
+/* ── Chat Header Elements ──────────────────────────────────── */
+.relaya-root .chat-header__title {
+  font-size: var(--relaya-font-size-base);
+  font-weight: 600;
+  font-family: var(--sp-name-font);
+  color: var(--sp-name-color);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.relaya-root .chat-header__online {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--relaya-font-size-sm);
+  color: var(--sp-online-color);
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 4px 6px;
+  border-radius: var(--relaya-radius-sm);
+  transition: opacity 0.15s;
+}
+
+.relaya-root .chat-header__online:hover {
+  opacity: 0.7;
+}
+
+.relaya-root .online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--relaya-color-online);
+  flex-shrink: 0;
+}
+
+.relaya-root .chat-header .btn--ghost {
+  background: var(--sp-btn-bg);
+  border: 1px solid var(--sp-btn-border);
+  color: var(--sp-btn-text);
+  font-size: 12px;
+  padding: 3px 10px;
+}
+
+.relaya-root .chat-header .btn--ghost:hover:not(:disabled) {
+  opacity: 0.85;
+  background: var(--sp-btn-bg);
+}
+
+.relaya-root .chat-header .btn--primary {
+  background: var(--sp-btn-bg);
+  color: var(--sp-btn-text);
+  font-size: 12px;
+  padding: 3px 10px;
+  width: auto;
+}
+
+.relaya-root .chat-header .btn--primary:hover:not(:disabled) {
+  opacity: 0.85;
+  background: var(--sp-btn-bg);
+}
+
+.relaya-root .chat-name-btn {
+  max-width: 120px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.relaya-root .chat-name-btn__label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relaya-root .chat-header__popout {
+  padding: 4px 6px !important;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.relaya-root .chat-header .chat-name-editor__display {
+  color: var(--sp-no-name-color) !important;
+  font-size: 12px;
+}
+
+.relaya-root .chat-name-editor__input {
+  padding: 3px 8px;
+  border: 1px solid var(--relaya-color-border);
+  border-radius: var(--relaya-radius-sm);
+  background: var(--relaya-color-surface);
+  color: var(--relaya-color-text);
+  font-size: 13px;
+  max-width: 140px;
+}
+
+.relaya-root .chat-name-editor__input:focus {
+  outline: none;
+  border-color: var(--relaya-color-accent);
+}
+
+/* ── Retention Boundary Notice ─────────────────────────────── */
+.relaya-root .retention-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--relaya-font-size-xs);
+  color: var(--relaya-color-text-faint);
+  text-align: center;
+  border-top: 1px solid var(--relaya-color-border);
+  margin-bottom: var(--spacing-sm);
+}
+
+/* ── Message List ──────────────────────────────────────────── */
+.relaya-root .load-older-btn {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.relaya-root .load-older-btn button {
+  font-size: var(--relaya-font-size-sm);
+  color: var(--relaya-color-accent);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--relaya-radius-sm);
+}
+
+.relaya-root .load-older-btn button:hover:not(:disabled) {
+  background: var(--relaya-color-surface-2);
+}
+
+.relaya-root .messages-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--relaya-color-text-faint);
+  font-size: var(--relaya-font-size-sm);
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+/* ── Message Item ──────────────────────────────────────────── */
+.relaya-root .message-item {
+  --message-avatar-slot-width: 32px;
+  display: flex;
+  gap: var(--spacing-sm);
+  max-width: 85%;
+  align-items: flex-start;
+  position: relative;
+}
+
+.relaya-root .message-item--has-image {
+  max-width: 100%;
+}
+
+.relaya-root .message-item--has-image.message-item--other .message-item__bubble-wrap {
+  max-width: calc(100% - var(--message-avatar-slot-width) - var(--spacing-sm));
+}
+
+.relaya-root .message-item--has-image.message-item--own .message-item__bubble-wrap {
+  max-width: 100%;
+}
+
+.relaya-root .message-item--own {
+  flex-direction: row-reverse;
+  align-self: flex-end;
+}
+
+.relaya-root .message-item--other {
+  align-self: flex-start;
+}
+
+.relaya-root .message-item--deleted {
+  opacity: 0.65;
+}
+
+.relaya-root .message-item__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  background: var(--sp-avatar-bg);
+  color: var(--sp-avatar-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--relaya-font-size-xs);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.relaya-root .message-item__avatar-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.relaya-root .message-item__avatar-slot {
+  width: var(--message-avatar-slot-width);
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  padding-top: 16px;
+}
+
+.relaya-root .message-item--own .message-item__avatar-slot {
+  margin-left: 3px;
+}
+
+.relaya-root .message-item--other .message-item__avatar-slot {
+  margin-right: 3px;
+  padding-top: 0;
+}
+
+.relaya-root .message-item__avatar-column .message-item__avatar-slot {
+  padding-top: 0;
+}
+
+.relaya-root .message-item__avatar--image {
+  object-fit: cover;
+}
+
+.relaya-root .message-item__bubble-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.relaya-root .message-item--own .message-item__bubble-wrap {
+  align-items: flex-end;
+}
+
+.relaya-root .message-item__name-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-sm) 2px;
+  min-width: 0;
+  width: 100%;
+}
+
+.relaya-root .message-item--other .message-item__name-row {
+  justify-content: space-between;
+}
+
+.relaya-root .message-item--own .message-item__name-row {
+  justify-content: flex-end;
+}
+
+/* Moderator display-name colour - applied by MessageItem when isModerator is set */
+.relaya-root .message-item__author--mod {
+  color: var(--relaya-color-name-mod);
+}
+
+.relaya-root .message-item__author {
+  font-size: var(--relaya-font-size-xs);
+  color: var(--relaya-color-text-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.relaya-root .message-item__time {
+  font-size: var(--relaya-font-size-xs);
+  color: var(--sp-time-color);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.relaya-root .message-item__status-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 2px var(--spacing-sm) 0;
+}
+
+.relaya-root .message-item__status {
+  font-size: var(--relaya-font-size-xs);
+  color: var(--relaya-color-text-faint);
+}
+
+.relaya-root .message-item__bubble {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--relaya-radius-bubble);
+  font-family: var(--sp-msg-font);
+  font-size: var(--sp-msg-font-size);
+  line-height: 1.4;
+  word-break: break-word;
+  position: relative;
+}
+
+/* Link styling inside message bubbles */
+.relaya-root .message-link {
+  color: var(--relaya-color-link);
+  text-decoration: underline;
+  word-break: break-all;
+}
+.relaya-root .message-link:hover,
+.relaya-root .message-link:active {
+  color: var(--relaya-color-link-active);
+}
+
+/* Mention styling - bold text, inherits color from parent */
+.relaya-root .message-item__bubble strong {
+  font-weight: 700;
+}
+
+.relaya-root .message-item__bare-image-wrap {
+  max-width: 100%;
+}
+
+.relaya-root .chat-image {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+}
+
+.relaya-root .chat-image--inline {
+  vertical-align: middle;
+  margin: 1px 2px;
+}
+
+.relaya-root .chat-image--bare {
+  display: block;
+}
+
+.relaya-root .chat-image__img {
+  display: block;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  transition: opacity 0.15s ease;
+}
+
+.relaya-root .chat-image__loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 56px;
+  min-height: 32px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--relaya-color-text-faint) 20%, transparent);
+}
+
+.relaya-root .chat-image__loading > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--relaya-color-text-muted);
+  animation: chat-image-dot-pulse 0.9s infinite ease-in-out;
+}
+
+.relaya-root .chat-image__loading > span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.relaya-root .chat-image__loading > span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+@keyframes chat-image-dot-pulse {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.7);
+    opacity: 0.45;
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+.relaya-root .chat-image__fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: var(--relaya-radius-sm);
+  border: 1px dashed var(--relaya-color-border);
+  color: var(--relaya-color-text-muted);
+  font-size: var(--relaya-font-size-xs);
+  background: var(--relaya-color-surface-2);
+}
+
+.relaya-root .message-item--own .message-item__bubble {
+  background: var(--relaya-color-message-own-bg);
+  color: var(--sp-own-msg-text);
+  border-bottom-right-radius: var(--relaya-radius-sm);
+}
+
+.relaya-root .message-item--other .message-item__bubble {
+  background: var(--relaya-color-message-bg);
+  color: var(--sp-other-msg-text);
+  border-bottom-left-radius: var(--relaya-radius-sm);
+}
+
+.relaya-root .message-item--deleted .message-item__bubble {
+  background: var(--relaya-color-deleted-bg);
+  color: var(--relaya-color-deleted-text);
+  font-style: italic;
+  font-size: var(--relaya-font-size-sm);
+}
+
+.relaya-root .message-item--optimistic .message-item__bubble {
+  background: var(--relaya-color-optimistic-bg);
+  opacity: 0.85;
+}
+
+.relaya-root .message-item--failed .message-item__bubble {
+  background: var(--relaya-color-failed-bg);
+}
+
+/* Desktop hover actions removed - replaced by unified context menu */
+
+.relaya-root .scroll-to-bottom {
+  position: absolute;
+  bottom: var(--spacing-md);
+  right: var(--spacing-lg);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--relaya-color-accent);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px var(--relaya-color-shadow);
+  font-size: 18px;
+  z-index: 5;
+}
+
+.relaya-root .scroll-to-bottom:hover {
+  background: var(--relaya-color-accent-hover);
+}
+
+.relaya-root .message-item__kebab-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--relaya-color-text-faint);
+  border-radius: var(--relaya-radius-sm);
+  background: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.relaya-root .message-item__kebab-btn:active {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--relaya-color-text-muted);
+}
+
+.relaya-root .message-item__kebab-menu {
+  position: fixed;
+  z-index: 200;
+  min-width: 140px;
+  background: var(--relaya-color-surface);
+  border: 1px solid var(--relaya-color-border);
+  border-radius: var(--relaya-radius-md);
+  box-shadow: 0 4px 16px var(--relaya-color-shadow);
+  overflow: hidden;
+}
+
+.relaya-root .message-item__kebab-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: 10px var(--spacing-md);
+  font-size: var(--relaya-font-size-sm);
+  color: var(--relaya-color-text);
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.relaya-root .message-item__kebab-menu__item:hover,
+.relaya-root .message-item__kebab-menu__item:active {
+  background: var(--relaya-color-surface-2);
+}
+
+.relaya-root .message-item__kebab-menu__item--danger {
+  color: var(--relaya-color-danger);
+}
+
+.relaya-root .kebab-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+}
+
+/* ── Connection Status ─────────────────────────────────────── */
+.relaya-root .connection-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--relaya-font-size-xs);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.relaya-root .connection-status--connecting,
+.relaya-root .connection-status--reconnecting {
+  background: var(--relaya-color-warning);
+  color: #1a1a2e;
+}
+
+.relaya-root .connection-status--disconnected {
+  background: var(--relaya-color-danger);
+  color: #ffffff;
+}
+
+.relaya-root .connection-status--connected {
+  display: none;
+}
+
+.relaya-root .connection-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Powered by Relaya badge ───────────────────────────────── */
+.relaya-root .relaya-branding {
+  flex-shrink: 0;
+  text-align: center;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--relaya-color-text);
+  border-top: 1px solid var(--relaya-color-border, rgba(255, 255, 255, 0.08));
+}
+
+.relaya-root .relaya-branding a {
+  color: inherit;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.relaya-root .relaya-branding a:hover {
+  opacity: 0.75;
+  text-decoration: underline;
+}

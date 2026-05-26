@@ -1,0 +1,12 @@
+{
+  "name": "relaya-sdk",
+  "private": true,
+  "workspaces": ["packages/core", "packages/react", "packages/react-native"],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "build:core": "npm run build --workspace packages/core",
+    "build:react": "npm run build --workspace packages/react",
+    "build:react-native": "npm run build --workspace packages/react-native",
+    "test": "npm test --workspaces"
+  }
+}

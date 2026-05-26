@@ -1,0 +1,105 @@
+/* ============================================================
+   CSS Variables - Theme Tokens
+   Light and dark theme definitions, sizing, station theming
+   ============================================================ */
+
+:root,
+[data-theme="light"] {
+  /* ── Base palette ── */
+  --relaya-color-bg: #f0f2f5;
+  --relaya-color-surface: #ffffff;
+  --relaya-color-surface-2: #f8f9fa;
+  --relaya-color-border: #e0e3e8;
+  --relaya-color-text: #1a1a2e;
+  --relaya-color-text-muted: #6c757d;
+  --relaya-color-text-faint: #adb5bd;
+  --relaya-color-accent: #007aff;
+  --relaya-color-accent-hover: #0062cc;
+  --relaya-color-danger: #dc3545;
+  --relaya-color-danger-hover: #c82333;
+  --relaya-color-warning: #ffc107;
+  --relaya-color-success: #28a745;
+  --relaya-color-online: #28a745;
+  --relaya-color-shadow: rgba(0, 0, 0, 0.08);
+  --relaya-color-own-msg-bg: #007aff;
+  --relaya-color-own-msg-text: #ffffff;
+  --relaya-color-other-msg-bg: #e9ecef;
+  --relaya-color-other-msg-text: #1a1a2e;
+  --relaya-color-deleted-bg: #f1f3f5;
+  --relaya-color-deleted-text: #868e96;
+  --relaya-color-optimistic-bg: #cce5ff;
+  --relaya-color-failed-bg: #f8d7da;
+  --relaya-color-status-bar: #343a40;
+  --relaya-color-status-text: #ffffff;
+
+  /* ── Sizing ── */
+  --relaya-radius-sm: 4px;
+  --relaya-radius-md: 8px;
+  --relaya-radius-lg: 16px;
+  --relaya-radius-bubble: 18px;
+  --relaya-font-size-xs: 11px;
+  --relaya-font-size-sm: 13px;
+  --relaya-font-size-base: 15px;
+  --relaya-font-size-lg: 17px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --sidebar-width: 220px;
+  --input-height: 52px;
+  --header-height: 52px;
+
+  /* ── Space theme defaults (overridden per-space via spaceThemes.ts) ── */
+  /* Title / header */
+  --sp-title-bg:      var(--relaya-color-surface);
+  --sp-name-color:    var(--relaya-color-text);
+  --sp-name-font:     inherit;
+  --sp-ui-font:       -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --sp-online-color:  var(--relaya-color-text-muted);
+  --sp-no-name-color: var(--relaya-color-text-muted);
+  --sp-btn-border:    var(--relaya-color-border);
+  --sp-btn-bg:        var(--relaya-color-surface);
+  --sp-btn-text:      var(--relaya-color-text);
+  /* Messages */
+  --sp-avatar-bg:        var(--relaya-color-accent);
+  --sp-avatar-text:      #ffffff;
+  --sp-own-msg-bg:       var(--relaya-color-own-msg-bg);
+  --sp-own-msg-text:     var(--relaya-color-own-msg-text);
+  --sp-other-msg-bg:     var(--relaya-color-other-msg-bg);
+  --sp-other-msg-text:   var(--relaya-color-other-msg-text);
+  --sp-msg-font:         inherit;
+  --sp-msg-font-size:    var(--relaya-font-size-base);
+  --sp-time-color:       var(--relaya-color-text-faint);
+  /* Send button - S1/S2: defaults match own-message bubble so all three stay in sync */
+  --sp-send-btn-bg:      var(--sp-own-msg-bg);
+  --sp-send-btn-text:    var(--sp-own-msg-text);
+}
+
+[data-theme="dark"] {
+  --relaya-color-bg: #0d1117;
+  --relaya-color-surface: #161b22;
+  --relaya-color-surface-2: #21262d;
+  --relaya-color-border: #30363d;
+  --relaya-color-text: #e6edf3;
+  --relaya-color-text-muted: #8b949e;
+  --relaya-color-text-faint: #484f58;
+  --relaya-color-accent: #58a6ff;
+  --relaya-color-accent-hover: #79b8ff;
+  --relaya-color-danger: #f85149;
+  --relaya-color-danger-hover: #ff7b72;
+  --relaya-color-warning: #d29922;
+  --relaya-color-success: #3fb950;
+  --relaya-color-online: #3fb950;
+  --relaya-color-shadow: rgba(0, 0, 0, 0.4);
+  --relaya-color-own-msg-bg: #1f6feb;
+  --relaya-color-own-msg-text: #ffffff;
+  --relaya-color-other-msg-bg: #21262d;
+  --relaya-color-other-msg-text: #e6edf3;
+  --relaya-color-deleted-bg: #2d333b;
+  --relaya-color-deleted-text: #8b949e;
+  --relaya-color-optimistic-bg: #1f3a5c;
+  --relaya-color-failed-bg: #3d1f1f;
+  --relaya-color-status-bar: #1c2128;
+  --relaya-color-status-text: #e6edf3;
+}

@@ -1,0 +1,267 @@
+/* ── Sticker Admin Page ────────────────────────────────────── */
+.relaya-root .sticker-admin-page {
+  min-height: 100%;
+  padding: 8px;
+  background: var(--relaya-color-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.relaya-root .sticker-admin-page__topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.relaya-root .sticker-admin-page__title-group {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.relaya-root .sticker-admin-page__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.relaya-root .sticker-admin-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.relaya-root .sticker-admin-page__back {
+  margin-bottom: 0;
+  padding: 3px 8px !important;
+  font-size: 12px;
+}
+
+.relaya-root .sticker-admin-page__title {
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.relaya-root .sticker-admin-page__subtitle {
+  margin-top: 0;
+  color: var(--relaya-color-text-muted);
+  font-size: 12px;
+}
+
+.relaya-root .sticker-admin-page__status-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 18px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--relaya-color-success) 10%, transparent);
+  color: var(--relaya-color-success);
+  font-size: 11px;
+  line-height: 1.2;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.relaya-root .sticker-admin-page__header-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.relaya-root .sticker-admin-page__header-actions .btn {
+  padding: 3px 10px;
+  min-height: 32px;
+  font-size: 12px;
+}
+
+.relaya-root .sticker-admin-page__notice,
+.relaya-root .sticker-admin-page__error,
+.relaya-root .sticker-admin-page__success,
+.relaya-root .sticker-admin-page__state {
+  border-radius: var(--relaya-radius-md);
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.relaya-root .sticker-admin-page__notice {
+  background: color-mix(in srgb, var(--relaya-color-accent) 10%, transparent);
+  color: var(--relaya-color-text);
+}
+
+.relaya-root .sticker-admin-page__error {
+  background: color-mix(in srgb, var(--relaya-color-danger) 10%, transparent);
+  color: var(--relaya-color-danger);
+}
+
+.relaya-root .sticker-admin-page__success {
+  background: color-mix(in srgb, var(--relaya-color-success) 10%, transparent);
+  color: var(--relaya-color-success);
+}
+
+.relaya-root .sticker-admin-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.relaya-root .sticker-admin-page__count {
+  font-size: 12px;
+  line-height: 1;
+  color: var(--relaya-color-text-muted);
+}
+
+.relaya-root .sticker-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+  gap: 6px;
+}
+
+.relaya-root .sticker-admin-card {
+  background: var(--relaya-color-surface);
+  border: 1px solid var(--relaya-color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+}
+
+.relaya-root .sticker-admin-card--dragging {
+  opacity: 0.45;
+  transform: scale(0.98);
+}
+
+.relaya-root .sticker-admin-card--drop-target {
+  border-color: var(--relaya-color-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--relaya-color-accent) 65%, transparent);
+}
+
+.relaya-root .sticker-admin-card__preview {
+  min-height: 122px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--relaya-color-surface-2);
+  padding: 4px;
+}
+
+.relaya-root .sticker-admin-card__preview--draggable {
+  position: relative;
+  cursor: grab;
+  user-select: none;
+}
+
+.relaya-root .sticker-admin-card__preview--draggable:active {
+  cursor: grabbing;
+}
+
+.relaya-root .sticker-admin-card__preview img {
+  width: 96px;
+  max-width: 96px;
+  max-height: 96px;
+  height: auto;
+  object-fit: contain;
+}
+
+.relaya-root .sticker-admin-card__drag-badge {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 20px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--relaya-color-surface) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--relaya-color-border) 90%, transparent);
+  color: var(--relaya-color-text-muted);
+  font-size: 9px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.relaya-root .sticker-admin-card__drag-badge svg {
+  width: 10px;
+  height: 10px;
+  display: block;
+}
+
+.relaya-root .sticker-admin-card__body {
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.relaya-root .sticker-admin-card__filename {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--relaya-color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relaya-root .sticker-admin-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  font-size: var(--relaya-font-size-xs);
+  color: var(--relaya-color-text-muted);
+}
+
+.relaya-root .sticker-admin-card__shortcode-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--relaya-color-border);
+  border-radius: var(--relaya-radius-sm);
+  padding: 0 4px;
+  background: var(--relaya-color-surface-2);
+}
+
+.relaya-root .sticker-admin-card__shortcode-input input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 4px 0;
+  min-width: 0;
+  font-size: 11px;
+}
+
+.relaya-root .sticker-admin-card__shortcode-input input:focus {
+  outline: none;
+}
+
+.relaya-root .sticker-admin-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--relaya-font-size-xs);
+  color: var(--relaya-color-text-faint);
+}
+
+.relaya-root .sticker-admin-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.relaya-root .sticker-admin-card__actions .btn {
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 6px;
+  min-height: 20px;
+}
+

@@ -1,0 +1,76 @@
+/* ============================================================
+   Relaya Chat SDK - Embed Stylesheet
+   
+   Host-page-safe version of the SDK styles.  All rules are
+   scoped to .relaya-root; no global resets that would affect
+   the surrounding page.
+   
+   This file is imported with ?inline by styles/inject.ts so
+   the CSS is embedded in dist/index.js and auto-injected when
+   <RelayaChat> mounts.
+   
+   Keep in sync with docs/api-sdk/relaya-styling.css.
+   ============================================================ */
+
+/* ── Core tokens ─────────────────────────────────────────── */
+@import './core/variables.css';
+@import './core/theme-slots.css';
+
+/* ── Layout (uses .relaya-root scope - safe to import) ───── */
+@import './core/layout.css';
+
+/* ── Components ──────────────────────────────────────────── */
+@import './components/ui.css';
+@import './components/auth.css';
+@import './components/otp-code-input.css';
+@import './components/chat.css';
+@import './components/input.css';
+@import './components/users.css';
+@import './components/admin-panel.css';
+@import './components/admin-settings.css';
+@import './components/admin-stickers.css';
+@import './components/admin-reports.css';
+@import './components/admin-bans.css';
+@import './components/admin-theme.css';
+@import './components/admin-geo.css';
+@import './components/admin-export.css';
+@import './components/moderator-admin.css';
+
+/* ── Features ────────────────────────────────────────────── */
+@import './message-edit.css';
+@import './reply.css';
+@import './MuteToggle.css';
+
+/* ── Responsive ──────────────────────────────────────────── */
+@import './responsive.css';
+
+/* ── Scoped reset ────────────────────────────────────────── */
+/* Box-model reset constrained to .relaya-root.
+   Deliberately NOT importing reset.css (which targets html/body)
+   to avoid breaking the host page layout. */
+.relaya-root *,
+.relaya-root *::before,
+.relaya-root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.relaya-root * {
+  font-family: var(--sp-ui-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.relaya-root button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.relaya-root input,
+.relaya-root textarea {
+  font-family: inherit;
+  font-size: inherit;
+}

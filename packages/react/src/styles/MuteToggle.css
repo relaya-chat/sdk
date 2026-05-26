@@ -1,0 +1,55 @@
+/* MuteToggle Component Styles */
+
+.relaya-root .mute-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  color: white;
+  transition: opacity 0.2s ease;
+  min-width: 24px;
+  min-height: 24px;
+  margin-left: auto;
+  margin-right: -10px;
+  flex-shrink: 0;
+}
+
+.relaya-root .mute-toggle:hover {
+  opacity: 0.8;
+}
+
+.relaya-root .mute-toggle:focus {
+  outline: 2px solid var(--primary-color, #007bff);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.relaya-root .mute-toggle:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.relaya-root .mute-toggle:active {
+  opacity: 0.6;
+}
+
+.relaya-root .mute-toggle__icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+/* Screen reader only class for announcements */
+.relaya-root .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

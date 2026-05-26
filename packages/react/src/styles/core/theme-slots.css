@@ -1,0 +1,32 @@
+/* ============================================================
+   Theme Slots - Admin-Configurable Colour Overrides
+   
+   These 10 CSS custom properties are the admin-overridable surface
+   for the space theme editor. They represent the public theming
+   contract: the complete set of "extra" colours a space owner can
+   customise without touching code.
+
+   Note: --relaya-color-bg and --relaya-color-text are also part of
+   the 12-slot admin UI, but their canonical definitions live in
+   variables.css (base palette). They are naturally overridable there.
+
+   Defaults cascade from the base palette in variables.css so the
+   UI degrades correctly when no saved theme is present.
+   ============================================================ */
+
+:root,
+[data-theme="light"] {
+  /* Bubble colours defer to the station-theme vars first, then fall back to the base palette.
+     This ensures the admin editor probe reads the actual rendered colour and that
+     admin overrides (applied as inline style on :root) take effect in the chat. */
+  --relaya-color-message-bg:      var(--sp-other-msg-bg, var(--relaya-color-other-msg-bg));
+  --relaya-color-message-own-bg:  var(--sp-own-msg-bg, var(--relaya-color-own-msg-bg));
+  --relaya-color-text-secondary:  var(--relaya-color-text-muted);
+  --relaya-color-input-bg:        var(--relaya-color-surface-2);
+  --relaya-color-input-text:      var(--relaya-color-text);
+  --relaya-color-btn-bg:          var(--sp-send-btn-bg,  var(--sp-own-msg-bg));
+  --relaya-color-btn-text:        var(--sp-send-btn-text, var(--sp-own-msg-text));
+  --relaya-color-name-mod:        var(--relaya-color-accent);
+  --relaya-color-link:            var(--relaya-color-accent);
+  --relaya-color-link-active:     var(--relaya-color-accent-hover);
+}

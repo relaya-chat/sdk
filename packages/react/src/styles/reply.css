@@ -1,0 +1,136 @@
+
+/**
+ * Reply feature styles
+ * - Reply preview bar (above message input)
+ * - Reply bubble rendering (inside messages)
+ */
+
+/* ── Reply Preview Bar (above MessageInput) ───────────────── */
+.relaya-root .message-input-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.relaya-root .reply-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--relaya-color-surface-2, #f5f5f5);
+  border-top: 1px solid var(--relaya-color-border);
+  gap: var(--spacing-sm);
+}
+
+.relaya-root .reply-preview__content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1;
+  min-width: 0; /* Allow text truncation */
+}
+
+.relaya-root .reply-preview__line {
+  width: 3px;
+  height: 36px;
+  background: var(--relaya-color-accent, #3b82f6);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.relaya-root .reply-preview__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.relaya-root .reply-preview__author {
+  font-size: var(--relaya-font-size-sm);
+  font-weight: 600;
+  color: var(--relaya-color-text);
+}
+
+.relaya-root .reply-preview__excerpt {
+  font-size: var(--relaya-font-size-sm);
+  color: var(--relaya-color-text-secondary, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relaya-root .reply-preview__cancel {
+  background: none;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  padding: var(--spacing-xs);
+  cursor: pointer;
+  color: var(--relaya-color-text-secondary, #6b7280);
+  border-radius: var(--relaya-radius-sm);
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.relaya-root .reply-preview__cancel:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--relaya-color-text);
+}
+
+/* ── Reply Bubble Rendering (inside messages) ──────────────── */
+.relaya-root .message-reply-bubble {
+  display: flex;
+  align-items: stretch;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  padding: 6px 8px;
+  background: var(--reply-bubble-bg, rgba(0, 0, 0, 0.06));
+  border-radius: var(--relaya-radius-sm);
+  border-left: 3px solid var(--relaya-color-accent, #3b82f6);
+}
+
+.relaya-root .message-reply-bubble__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.relaya-root .message-reply-bubble__author {
+  font-size: var(--relaya-font-size-xs);
+  font-weight: 600;
+  color: var(--relaya-color-accent, #3b82f6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relaya-root .message-reply-bubble__excerpt {
+  font-size: var(--relaya-font-size-xs);
+  color: var(--relaya-color-text-secondary, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Dark theme override */
+@media (prefers-color-scheme: dark) {
+  .relaya-root .message-reply-bubble {
+    --reply-bubble-bg: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Own-message override - bubble sits on a solid blue background */
+.relaya-root .message-item--own .message-reply-bubble {
+  --reply-bubble-bg: rgba(255, 255, 255, 0.2);
+  border-left-color: rgba(255, 255, 255, 0.7);
+}
+
+.relaya-root .message-item--own .message-reply-bubble__author {
+  color: #ffffff;
+}
+
+.relaya-root .message-item--own .message-reply-bubble__excerpt {
+  color: rgba(255, 255, 255, 0.75);
+}

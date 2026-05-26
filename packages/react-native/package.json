@@ -1,0 +1,48 @@
+{
+  "name": "@relaya-chat/react-native",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Real-time community chat hooks for React Native and Expo — OTP auth, WebSocket messaging, moderation. Connects to the Relaya SaaS at api.relaya.chat. Headless: bring your own UI.",
+  "keywords": [
+    "chat", "real-time", "realtime", "community-chat", "react-native",
+    "expo", "websocket", "moderation", "radio", "live", "ugc",
+    "hooks", "headless"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/relaya-chat/sdk.git",
+    "directory": "packages/react-native"
+  },
+  "homepage": "https://relaya.chat",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts"
+  },
+  "peerDependencies": {
+    "@react-native-async-storage/async-storage": ">=1.18.0",
+    "react": ">=18.0.0",
+    "react-native": ">=0.72.0"
+  },
+  "dependencies": {
+    "@relaya-chat/core": "^1.0.0"
+  },
+  "devDependencies": {
+    "@react-native-async-storage/async-storage": "^3.0.2",
+    "@types/react": "^18.3.0",
+    "@types/react-native": "^0.73.0",
+    "typescript": "^5.5.0",
+    "vitest": "^4.1.2"
+  }
+}
