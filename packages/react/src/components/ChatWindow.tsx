@@ -319,7 +319,7 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
       {showBranding && (
         <div className="relaya-branding">
           <a href="https://relaya.chat?ref=powered-by" target="_blank" rel="noopener noreferrer">
-            Powered by Relaya
+            Powered by Relaya™
           </a>
         </div>
       )}

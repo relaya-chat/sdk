@@ -20,7 +20,7 @@ That's it. Auth, real-time messaging, moderation, stickers, themes, and history 
 
 ---
 
-## What is Relaya?
+## What is Relaya™?
 
 Relaya started as a problem: when [Balearic FM](https://balearic-fm.com) tried to embed Cbox into its iOS app, Apple rejected it — Cbox couldn't meet Apple's UGC content moderation requirements. So the founder built Relaya: the community chat infrastructure that ticked every box, at a price indie developers can actually afford.
 
@@ -58,7 +58,7 @@ Copy-paste an iframe onto your Wix site. Drop `@relaya-chat/react` into your Nex
 
 ### 🎨 Custom branding
 
-Match your site's colors with the visual theme editor. Custom fonts, colors, and layout options. The "Powered by Relaya" badge is present on the Embed plan and removed on Community and Developer plans.
+Match your site's colors with the visual theme editor. Custom fonts, colors, and layout options. The "Powered by Relaya™" badge is present on the Embed plan and removed on Community and Developer plans.
 
 ### 🖼️ Custom sticker sets
 
@@ -155,7 +155,7 @@ All features above are available across three subscription tiers — from a simp
 
 ## How Relaya Compares
 
-|  | Tawk.to | Stream | Cbox | Discord | **Relaya** |
+|  | Tawk.to | Stream | Cbox | Discord | **Relaya™** |
 |---|---|---|---|---|---|
 | **Use case** | Customer support | Platform chat | Community widget | Community | **Community** |
 | **No-code embed** | ✓ | ✗ | ✓ | ✓ | **✓** |

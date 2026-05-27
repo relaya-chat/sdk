@@ -1,6 +1,6 @@
 # Authentication — @relaya-chat/react
 
-## What Relaya does for you
+## What Relaya™ does for you
 
 Relaya uses a **short-lived access token + rotating refresh token** model. Your users authenticate once with a one-time code sent to their email. After that, Relaya handles everything:
 

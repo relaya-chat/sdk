@@ -1,6 +1,6 @@
 # @relaya-chat/core
 
-> Core API client and WebSocket manager for the Relaya real-time chat SaaS.
+> Core API client and WebSocket manager for the Relaya™ real-time chat SaaS.
 > Used by `@relaya-chat/react` and `@relaya-chat/react-native`. Can also be used
 > headlessly to build custom chat UI in any framework.
 

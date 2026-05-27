@@ -1,8 +1,8 @@
-# Relaya SDK
+# Relaya™ SDK
 
 Add real-time community chat to your React or React Native app in minutes.
 
-Relaya is a hosted chat SaaS for media brands, radio stations, and community apps. This SDK connects your front end to the Relaya platform at [api.relaya.chat](https://api.relaya.chat).
+Relaya™ is a hosted chat SaaS for media brands, radio stations, and community apps. This SDK connects your front end to the Relaya platform at [api.relaya.chat](https://api.relaya.chat).
 
 ## Packages
 

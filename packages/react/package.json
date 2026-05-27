@@ -2,7 +2,7 @@
   "name": "@relaya-chat/react",
   "version": "1.0.1",
   "private": false,
-  "description": "Drop-in community chat component for React apps — real-time, moderated, WebSocket-based. Connects to the Relaya SaaS at api.relaya.chat. Embed with one line or go headless with hooks.",
+  "description": "Drop-in community chat component for React apps — real-time, moderated, WebSocket-based. Connects to the Relaya™ SaaS at api.relaya.chat. Embed with one line or go headless with hooks.",
   "keywords": [
     "chat",
     "real-time",

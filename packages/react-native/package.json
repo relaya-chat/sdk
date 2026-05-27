@@ -2,7 +2,7 @@
   "name": "@relaya-chat/react-native",
   "version": "1.0.0",
   "private": false,
-  "description": "Real-time community chat hooks for React Native and Expo — OTP auth, WebSocket messaging, moderation. Connects to the Relaya SaaS at api.relaya.chat. Headless: bring your own UI.",
+  "description": "Real-time community chat hooks for React Native and Expo — OTP auth, WebSocket messaging, moderation. Connects to the Relaya™ SaaS at api.relaya.chat. Headless: bring your own UI.",
   "keywords": [
     "chat", "real-time", "realtime", "community-chat", "react-native",
     "expo", "websocket", "moderation", "radio", "live", "ugc",
