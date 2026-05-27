@@ -233,7 +233,8 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
       if (!_refreshPromise) {
         _refreshPromise = api.refresh(rt).finally(() => { _refreshPromise = null; });
       }
-      _refreshPromise.then(result => {
+      const inflight = _refreshPromise!;
+      inflight.then(result => {
         // Store updated pair
         tokenRef.current = result.accessToken;
         currentRtRef.current = result.refreshToken;
@@ -366,7 +367,8 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
         if (!_refreshPromise) {
           _refreshPromise = api.refresh(storedRt).finally(() => { _refreshPromise = null; });
         }
-        _refreshPromise.then(result => {
+        const inflight = _refreshPromise!;
+        inflight.then(result => {
           void applyTokenPair(result.accessToken, result.refreshToken);
         }).catch((err: unknown) => {
           // Only treat 401/403 as a genuine auth failure (RT expired or revoked).
@@ -386,7 +388,7 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
                 return;
               }
               api.refresh(retryRt)
-                .then(result => void applyTokenPair(result.accessToken, result.refreshToken))
+                .then((result: { accessToken: string; refreshToken: string }) => void applyTokenPair(result.accessToken, result.refreshToken))
                 .catch(() => {
                   clearStoredRefreshToken();
                   setState(s => ({ ...s, status: 'anonymous', stationSlug: configuredSpaceSlug }));
