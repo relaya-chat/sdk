@@ -38,14 +38,10 @@ jobs:
 
       # Publishes all workspaces where "private" is not true.
       # --provenance attaches build attestation (requires id-token: write above).
-      # --loglevel http shows the OIDC exchange and PUT request details for diagnostics.
+      # NODE_AUTH_TOKEN must be cleared so npm skips the GitHub token that
+      # actions/setup-node injects by default, allowing OIDC Trusted Publishing
+      # to handle authentication via the npm registry's OIDC exchange endpoint.
       - name: Publish to npm
-        run: npm publish --workspaces --access public --provenance --loglevel http
-
-      - name: Upload npm debug log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: npm-debug-log
-          path: /home/runner/.npm/_logs/
-          retention-days: 3
+        run: npm publish --workspaces --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ''
