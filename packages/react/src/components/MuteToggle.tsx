@@ -5,6 +5,10 @@ import { HiBell, HiBellSlash } from 'react-icons/hi2';
 import { useNotificationMute } from '../contexts/NotificationMuteContext.js';
 import '../styles/MuteToggle.css';
 
+// react-icons v5 IconType is not yet fully compatible with @types/react@19
+const BellSlash = HiBellSlash as React.ElementType;
+const Bell = HiBell as React.ElementType;
+
 export default function MuteToggle() {
   const { isMuted, setIsMuted } = useNotificationMute();
 
@@ -36,9 +40,9 @@ export default function MuteToggle() {
       type="button"
     >
       {isMuted ? (
-        <HiBellSlash className="mute-toggle__icon" aria-hidden="true" />
+        <BellSlash className="mute-toggle__icon" aria-hidden="true" />
       ) : (
-        <HiBell className="mute-toggle__icon" aria-hidden="true" />
+        <Bell className="mute-toggle__icon" aria-hidden="true" />
       )}
     </button>
   );

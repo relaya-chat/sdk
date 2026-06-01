@@ -47,7 +47,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && tsc -p tsconfig.build.json",
     "dev": "vite build --watch",
     "lint": "eslint src --ext .ts,.tsx"
   },
