@@ -8,6 +8,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.3] — 2026-06-01
+
+### Fixed
+
+- **`@relaya-chat/react`** — `StickerPickerDialog` `pickerRef` prop type widened to `React.Ref<HTMLDivElement>` for React 19 compatibility. Previously the narrower `RefObject<HTMLDivElement>` caused a TypeScript build error when consuming the ref returned by `useRef` under `@types/react@19`.
+
+---
+
 ## [1.1.2] — 2026-06-01
 
 ### Fixed

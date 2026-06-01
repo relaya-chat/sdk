@@ -15,7 +15,7 @@ function stickerAlt(filename: string): string {
 }
 
 interface StickerPickerDialogProps {
-  pickerRef: React.RefObject<HTMLDivElement>;
+  pickerRef: React.Ref<HTMLDivElement>;
   pickerLoading: boolean;
   pickerError: string | null;
   pickerStickers: (StickerListing & { shortcode: string })[];
