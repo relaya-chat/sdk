@@ -26,7 +26,7 @@ export default function App() {
   return (
     <RelayaChat
       spaceSlug="my-space"
-      apiBase="https://api.relaya.chat"
+      serverUrl="https://api.relaya.chat"
     />
   );
 }
@@ -44,7 +44,7 @@ import { useRelayaChat } from '@relaya-chat/react-native';
 export default function ChatScreen() {
   const { messages, sendMessage, connectionStatus } = useRelayaChat({
     spaceSlug: 'my-space',
-    apiBase: 'https://api.relaya.chat',
+    serverUrl: 'https://api.relaya.chat',
   });
   // render your own UI using messages and sendMessage
 }
