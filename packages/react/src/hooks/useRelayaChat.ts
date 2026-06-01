@@ -288,17 +288,35 @@ export function useRelayaChat(
 
     createConnection();
 
-    // Page Visibility API: disconnect when the tab is hidden so the server
-    // doesn't accumulate heartbeat timeouts; reconnect (fresh instance) when
-    // the tab becomes visible again. The existing catch-up logic in
-    // handleStatusChange fetches any messages missed while hidden.
+    // Page Visibility API: close the connection when the tab has been hidden
+    // long enough to matter, and reconnect when the tab becomes visible again.
+    //
+    // A delay is used before closing so that brief tab switches (which fire
+    // visibilitychange immediately) don't generate noisy connect/disconnect churn
+    // on the server. If the tab returns within the delay window the timer is
+    // cancelled and the existing connection is kept alive. The server's heartbeat
+    // (60s timeout) acts as the backstop for truly abandoned connections.
+    let visibilityTimer: ReturnType<typeof setTimeout> | null = null;
+
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        connRef.current?.close();
-        connRef.current = null;
+        visibilityTimer = setTimeout(() => {
+          visibilityTimer = null;
+          connRef.current?.close();
+          connRef.current = null;
+        }, 30_000);
       } else {
-        // close() sets the `closed` flag — a fresh instance is required
-        createConnection();
+        if (visibilityTimer !== null) {
+          // Tab returned before the timer fired — keep the live connection.
+          clearTimeout(visibilityTimer);
+          visibilityTimer = null;
+        } else {
+          // Timer already fired (tab was hidden > 30s) — need a fresh connection.
+          // close() sets the `closed` flag on the old instance; createConnection()
+          // builds a new one. The catch-up logic in handleStatusChange fetches
+          // any messages missed while hidden.
+          createConnection();
+        }
       }
     };
 
@@ -306,6 +324,9 @@ export function useRelayaChat(
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (visibilityTimer !== null) {
+        clearTimeout(visibilityTimer);
+      }
       connRef.current?.close();
       connRef.current = null;
     };
