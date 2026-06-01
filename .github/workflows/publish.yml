@@ -26,6 +26,11 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
+      # npm Trusted Publishing (OIDC) requires npm >= 11.5.1.
+      # Node 22 ships npm v10 which cannot perform the OIDC handshake.
+      - name: Upgrade npm to latest (required for OIDC Trusted Publishing)
+        run: npm install -g npm@latest
+
       - name: Install dependencies
         run: npm ci
 
@@ -37,13 +42,7 @@ jobs:
         run: npm run build
 
       # Publishes all workspaces where "private" is not true.
-      # --provenance attaches build attestation (requires id-token: write above).
-      # actions/setup-node injects github.token as NODE_AUTH_TOKEN which blocks
-      # npm's OIDC Trusted Publishing exchange. We unset it and delete the
-      # _authToken entry from .npmrc before publishing so npm falls through to
-      # the OIDC registry exchange endpoint.
+      # Provenance attestations are published automatically by npm Trusted
+      # Publishing — the --provenance flag is not required here.
       - name: Publish to npm
-        run: |
-          unset NODE_AUTH_TOKEN
-          npm config delete //registry.npmjs.org/:_authToken || true
-          npm publish --workspaces --access public --provenance
+        run: npm publish --workspaces --access public
