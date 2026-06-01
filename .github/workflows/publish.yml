@@ -38,10 +38,12 @@ jobs:
 
       # Publishes all workspaces where "private" is not true.
       # --provenance attaches build attestation (requires id-token: write above).
-      # NODE_AUTH_TOKEN must be cleared so npm skips the GitHub token that
-      # actions/setup-node injects by default, allowing OIDC Trusted Publishing
-      # to handle authentication via the npm registry's OIDC exchange endpoint.
+      # actions/setup-node injects github.token as NODE_AUTH_TOKEN which blocks
+      # npm's OIDC Trusted Publishing exchange. We unset it and delete the
+      # _authToken entry from .npmrc before publishing so npm falls through to
+      # the OIDC registry exchange endpoint.
       - name: Publish to npm
-        run: npm publish --workspaces --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ''
+        run: |
+          unset NODE_AUTH_TOKEN
+          npm config delete //registry.npmjs.org/:_authToken || true
+          npm publish --workspaces --access public --provenance
