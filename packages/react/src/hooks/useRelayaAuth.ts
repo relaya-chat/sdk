@@ -424,7 +424,13 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
   const login = useCallback(async (_email?: string) => {
     setState(s => ({ ...s, error: null }));
 
-    const popupUrl = `${window.location.origin}/auth/popup?station=${encodeURIComponent(configuredSpaceSlug)}`;
+    // When serverUrl is set (cross-origin SDK consumer), the popup and auth flow
+    // live on the Relaya server domain (e.g. api.relaya.chat), not the host app's
+    // domain. postMessage origin check must match accordingly.
+    const serverOrigin = effectiveBaseUrl
+      ? new URL(effectiveBaseUrl).origin
+      : window.location.origin;
+    const popupUrl = `${serverOrigin}/auth/popup?station=${encodeURIComponent(configuredSpaceSlug)}`;
     const popup = window.open(popupUrl, 'relaya-auth', 'width=480,height=600,left=200,top=100');
 
     if (!popup) {
@@ -436,7 +442,7 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
     }
 
     const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
+      if (event.origin !== serverOrigin) return;
       if ((event.data as { type?: string })?.type !== 'relaya:auth') return;
       window.removeEventListener('message', handleMessage);
       const { accessToken, refreshToken } = event.data as { accessToken: string; refreshToken: string };

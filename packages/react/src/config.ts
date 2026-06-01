@@ -95,11 +95,15 @@ export function clearTokenFromUrl(): void {
   window.history.replaceState({}, '', url.toString());
 }
 
-/** Base URL for all API calls. Empty string = same-origin (Vite proxy in dev). */
-export const API_BASE_URL = '';
-
 /**
  * Build the WebSocket URL for a given station and optional token.
+ *
+ * **Same-origin / iframe use only.** This helper builds a WS URL from
+ * `window.location` and is designed for the chat-web iframe app (Vite dev
+ * proxy, LAN dev, and same-origin production). It is NOT suitable for
+ * cross-origin React SDK consumers — they should derive the WS URL directly
+ * from their `serverUrl` prop (e.g. replace `https://` with `wss://`).
+ *
  * In dev, Vite proxies /ws → ws://localhost:9000/ws (for localhost access).
  * In production (same host), uses ws:// or wss:// based on the current protocol.
  * If no token is provided, creates an anonymous connection.
