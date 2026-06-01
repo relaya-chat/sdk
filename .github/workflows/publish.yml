@@ -20,10 +20,11 @@ jobs:
       - name: Checkout release tag
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 22
+      - name: Set up Node.js 22 with npm registry
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
@@ -37,5 +38,14 @@ jobs:
 
       # Publishes all workspaces where "private" is not true.
       # --provenance attaches build attestation (requires id-token: write above).
+      # --loglevel http shows the OIDC exchange and PUT request details for diagnostics.
       - name: Publish to npm
-        run: npm publish --workspaces --access public --provenance
+        run: npm publish --workspaces --access public --provenance --loglevel http
+
+      - name: Upload npm debug log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-debug-log
+          path: /home/runner/.npm/_logs/
+          retention-days: 3
