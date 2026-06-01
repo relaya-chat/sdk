@@ -8,6 +8,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.2] — 2026-06-01
+
+### Fixed
+
+- **`@relaya-chat/react`** — OTP entry screen now suggests checking spam folder when the login code doesn't arrive.
+- **`@relaya-chat/react`** — `.d.ts` type declaration files are now correctly generated and included in the build output.
+
+### Changed
+
+- npm publish workflow switched to OIDC Trusted Publishing (no long-lived token required).
+
+---
+
 ## [1.1.1] — 2026-06-01
 
 ### Fixed
