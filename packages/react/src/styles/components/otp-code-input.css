@@ -36,6 +36,14 @@
   font-weight: 500;
 }
 
+.relaya-root .otp-code-input__spam-hint {
+  margin: -12px 0 0;
+  font-size: 13px;
+  color: var(--relaya-color-text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
 .relaya-root .otp-code-input__field {
   width: 100%;
   max-width: 240px;

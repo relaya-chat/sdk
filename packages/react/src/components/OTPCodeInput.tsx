@@ -73,6 +73,9 @@ export default function OTPCodeInput({
       <p className="otp-code-input__hint">
         We sent a 6-digit code to <strong>{email}</strong>
       </p>
+      <p className="otp-code-input__spam-hint">
+        Don&apos;t see it? Check your spam folder.
+      </p>
       
       <input
         ref={inputRef}
