@@ -8,6 +8,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.4] — 2026-06-01
+
+### Fixed
+
+- **`@relaya-chat/react`** — CSS resets are now scoped to `.relaya-root` to prevent styles from leaking into the host application.
+- **`@relaya-chat/react`** — WebSocket disconnect on tab hide is now delayed to reduce spurious connect/disconnect churn when users briefly switch tabs.
+
+---
+
 ## [1.1.3] — 2026-06-01
 
 ### Fixed
