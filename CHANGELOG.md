@@ -8,6 +8,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.1] — 2026-06-01
+
+### Fixed
+
+- **`@relaya-chat/react`** — Avatar settings (gravatar gallery fetch, avatar preference PATCH) now use `serverUrl` as the request base. Previously these used hardcoded relative paths in `MessageItem` and `GravatarStyleModal`, silently failing for all cross-origin SDK embedders.
+
 ## [1.1.0] — 2026-06-01
 
 ### Fixed

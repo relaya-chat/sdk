@@ -1,6 +1,7 @@
 // Copyright (c) 2026 JAB Ventures, Inc. MIT License.
 // See LICENSE file at https://github.com/relaya-chat/sdk
 import React, { useState, useEffect } from 'react';
+import { useServerUrl } from '../contexts/RelayaServerContext.js';
 
 interface GravatarGalleryImage {
   url: string;
@@ -31,6 +32,7 @@ export default function GravatarStyleModal({
   onSelect,
   currentAvatarUrl,
 }: GravatarStyleModalProps) {
+  const serverUrl = useServerUrl();
   const [gallery, setGallery] = useState<GravatarGalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export default function GravatarStyleModal({
         const token = getToken();
         const headers: HeadersInit = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
-        const response = await fetch(`/api/chat/${stationSlug}/me/gravatar/gallery`, { headers });
+        const response = await fetch(`${serverUrl}/api/chat/${stationSlug}/me/gravatar/gallery`, { headers });
 
         if (!response.ok) {
           throw new Error('Failed to fetch gallery');

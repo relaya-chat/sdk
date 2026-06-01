@@ -14,6 +14,7 @@ import MessageEditForm from './MessageEditForm.js';
 import ChatImage from './ChatImage.js';
 import { RenderMessageContent } from './MentionRenderer.js';
 import { formatTime, isWithinEditWindow, getSingleImageUrl } from './messageItemUtils.js';
+import { useServerUrl } from '../contexts/RelayaServerContext.js';
 // Either a server-confirmed message or an optimistic pending one
 export type DisplayMessage =
   | { kind: 'server'; msg: Message }
@@ -72,6 +73,8 @@ export default function MessageItem({
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
 
+  const serverUrl = useServerUrl();
+
   const canDeleteAny = currentUserPermissions.includes(PERMISSIONS.DELETE_ANY);
   const canBan = currentUserPermissions.includes(PERMISSIONS.BAN_USER);
   const canReport = currentUserPermissions.includes(PERMISSIONS.REPORT);
@@ -121,7 +124,7 @@ export default function MessageItem({
       const token = getToken();
       const headers: HeadersInit = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const response = await fetch(`/api/chat/${stationSlug}/me/gravatar/gallery`, { headers });
+      const response = await fetch(`${serverUrl}/api/chat/${stationSlug}/me/gravatar/gallery`, { headers });
       if (response.ok) {
         const data = await response.json();
         setHasGalleryImages((data.gallery || []).length > 0);
@@ -319,7 +322,7 @@ export default function MessageItem({
           onUseDefaultGravatar={async () => {
             try {
               const token = getToken();
-              const response = await fetch(`/api/chat/${stationSlug}/me/avatar/preference`, {
+              const response = await fetch(`${serverUrl}/api/chat/${stationSlug}/me/avatar/preference`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                 body: JSON.stringify({ preference: 'default' }),
@@ -334,7 +337,7 @@ export default function MessageItem({
           onUseInitials={async () => {
             try {
               const token = getToken();
-              const response = await fetch(`/api/chat/${stationSlug}/me/avatar/preference`, {
+              const response = await fetch(`${serverUrl}/api/chat/${stationSlug}/me/avatar/preference`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                 body: JSON.stringify({ preference: null }),
@@ -384,7 +387,7 @@ export default function MessageItem({
                 ? { preference: 'gravatar', avatarUrl }
                 : { preference: 'gravatar', style: avatarUrl.split('d=')[1]?.split('&')[0] };
 
-              const response = await fetch(`/api/chat/${stationSlug}/me/avatar/preference`, {
+              const response = await fetch(`${serverUrl}/api/chat/${stationSlug}/me/avatar/preference`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                 body: JSON.stringify(body),
