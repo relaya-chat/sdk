@@ -1,8 +1,9 @@
 name: Publish to npm
 
 # Fires when a GitHub release is published (including pre-releases).
-# Requires a repository secret named NPM_TOKEN with publish access
-# to the @relaya-chat npm organisation.
+# Uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret required.
+# Setup: for each package on npmjs.com, add a Trusted Publisher entry:
+#   Owner: relaya-chat  |  Repository: sdk  |  Workflow: publish.yml
 on:
   release:
     types: [published]
@@ -13,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write   # required for npm OIDC trusted publishing
 
     steps:
       - name: Checkout release tag
@@ -35,8 +37,6 @@ jobs:
         run: npm run build
 
       # Publishes all workspaces where "private" is not true.
-      # NODE_AUTH_TOKEN is consumed by the npm registry config written by setup-node.
+      # --provenance attaches build attestation (requires id-token: write above).
       - name: Publish to npm
-        run: npm publish --workspaces --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --workspaces --access public --provenance
