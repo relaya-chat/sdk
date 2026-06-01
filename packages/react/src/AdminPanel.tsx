@@ -55,6 +55,7 @@ export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manage
   const effectiveManageOwnRT = manageOwnRefreshToken ?? !appConfig.managed;
   const auth = useRelayaAuth({
     spaceSlug,
+    serverUrl,
     initialToken: token ?? null,
     manageOwnRefreshToken: effectiveManageOwnRT,
     onSessionEnded,

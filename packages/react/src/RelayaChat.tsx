@@ -141,6 +141,7 @@ function ChatView({
 
   const auth = useRelayaAuth({
     spaceSlug,
+    serverUrl,
     initialToken: token ?? null,
     manageOwnRefreshToken: effectiveManageOwnRT,
     onSessionEnded,

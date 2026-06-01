@@ -52,7 +52,7 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
   const [replyingTo, setReplyingTo] = useState<ReplyingTo | null>(null);
   const [stickers, setStickers] = useState([] as Awaited<ReturnType<ApiClient['getStickers']>>['stickers']);
   const [soundUrls, setSoundUrls] = useState<StationSoundsResponse>({ mentionSoundUrl: null, channelSoundUrl: null });
-  const apiRef = useRef(new ApiClient(API_BASE_URL, getToken));
+  const apiRef = useRef(new ApiClient(serverUrl ?? API_BASE_URL, getToken));
 
   // ── Sidebar resize state ──────────────────────────────────────────────────
   const chatBodyRef = useRef<HTMLDivElement>(null);
@@ -103,6 +103,7 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
   // user to the login screen immediately without requiring a page reload.
   const chat = useRelayaChat(auth, getToken, {
     onStickersUpdated: refreshStickers,
+    serverUrl: serverUrl,
     wsBaseUrl: serverUrl,
     onForcedLogout: auth.logout,
   });

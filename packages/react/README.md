@@ -143,6 +143,51 @@ The hooks handle all state, connection management, and auth token refresh. The c
 
 ---
 
+## Custom Fonts
+
+The SDK uses a system font stack by default (`-apple-system`, `BlinkMacSystemFont`, `Segoe UI`, etc.). No custom font is bundled or fetched — you supply your own if you want one.
+
+To use a custom font, load it however your framework prefers, then override the `--sp-ui-font` CSS variable on `.relaya-root`:
+
+```css
+/* In your own stylesheet, after loading your font */
+.relaya-root {
+  --sp-ui-font: 'Geist', sans-serif;
+}
+```
+
+**Loading the font — framework examples:**
+
+```tsx
+// Next.js (next/font)
+import { GeistSans } from 'geist/font/sans';
+
+<div className={GeistSans.variable}>
+  <RelayaChat spaceSlug="..." serverUrl="..." />
+</div>
+```
+
+```css
+/* Plain CSS — self-hosted */
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-display: swap;
+}
+```
+
+```css
+/* Google Fonts or any CDN */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+.relaya-root {
+  --sp-ui-font: 'Inter', sans-serif;
+}
+```
+
+---
+
 ## Pricing
 
 All features above are available across three subscription tiers — from a simple embed for content creators to a full developer tier with React Native SDK and REST API access. Moderation tools (ban, delete, report) are included on **every tier**.

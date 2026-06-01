@@ -63,6 +63,11 @@ export interface AuthActions {
 export interface UseRelayaAuthOptions {
   /** Explicit space slug supplied by SDK consumers. Falls back to URL-derived appConfig.spaceSlug. */
   spaceSlug?: string;
+  /**
+   * Base URL for all REST API calls. Pass `"https://api.relaya.chat"` for Relaya SaaS,
+   * or `""` for same-origin (iframe / Vite-proxy dev). Defaults to same-origin.
+   */
+  serverUrl?: string;
   /** One-time magic-link token supplied by SDK consumers for auto-auth handoff. */
   initialToken?: string | null;
   /**
@@ -129,12 +134,12 @@ function decodeJwtExp(token: string): number | null {
 let _refreshPromise: Promise<{ accessToken: string; refreshToken: string }> | null = null;
 const _verifyTokenPromises = new Map<string, Promise<{ accessToken: string; refreshToken: string }>>();
 
-function verifyOneTimeToken(token: string, stationSlug: string): Promise<{ accessToken: string; refreshToken: string }> {
+function verifyOneTimeToken(baseUrl: string, token: string, stationSlug: string): Promise<{ accessToken: string; refreshToken: string }> {
   const cacheKey = `${stationSlug}:${token}`;
   const cached = _verifyTokenPromises.get(cacheKey);
   if (cached) return cached;
 
-  const promise = fetch(`${API_BASE_URL}/auth/verify?token=${encodeURIComponent(token)}&station=${encodeURIComponent(stationSlug)}`)
+  const promise = fetch(`${baseUrl}/auth/verify?token=${encodeURIComponent(token)}&station=${encodeURIComponent(stationSlug)}`)
     .then(r => r.ok ? r.json() : Promise.reject()) as Promise<{ accessToken: string; refreshToken: string }>;
   _verifyTokenPromises.set(cacheKey, promise);
   promise.finally(() => {
@@ -147,6 +152,7 @@ function verifyOneTimeToken(token: string, stationSlug: string): Promise<{ acces
 
 export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & AuthActions {
   const configuredSpaceSlug = options.spaceSlug ?? appConfig.spaceSlug;
+  const effectiveBaseUrl = options.serverUrl ?? API_BASE_URL;
   const configuredInitialToken = options.initialToken ?? null;
   // Storage ownership: when manageOwnRefreshToken is false, the host application
   // owns the RT. The widget must never read, write, or clear
@@ -180,7 +186,7 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Shared ApiClient instance — stable reference
-  const api = useRef(new ApiClient(API_BASE_URL, getToken)).current;
+  const api = useRef(new ApiClient(effectiveBaseUrl, getToken)).current;
 
   // Guard against React 18 StrictMode double-invocation
   const initStartedRef = useRef(false);
@@ -355,7 +361,7 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
         window.history.replaceState({}, '', cleanUrl.toString());
       }
 
-      verifyOneTimeToken(tokenToVerify, urlStation)
+      verifyOneTimeToken(effectiveBaseUrl, tokenToVerify, urlStation)
         .then((data: { accessToken: string; refreshToken: string }) => {
           void applyTokenPair(data.accessToken, data.refreshToken);
         })
@@ -449,7 +455,7 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
     const storedRt = currentRtRef.current ?? (manageOwnRT ? restoreRefreshToken() : null);
     goAnonymous();
     if (storedRt) {
-      fetch(`${API_BASE_URL}/auth/logout`, {
+      fetch(`${effectiveBaseUrl}/auth/logout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken: storedRt }),

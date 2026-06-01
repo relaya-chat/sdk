@@ -50,6 +50,35 @@ export default function ChatScreen() {
 }
 ```
 
+## Props
+
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `spaceSlug` | `string` | ✓ | Your space slug, assigned by Relaya |
+| `serverUrl` | `string` | ✓ | Base URL for **all** SDK requests — REST API calls (messages, stickers, sounds, auth) **and** the WebSocket connection. Pass `"https://api.relaya.chat"` for Relaya SaaS. Pass `""` only when the widget is same-origin with the server (e.g. Relaya's own hosted iframe). No backend proxy routes are required in your app. |
+| `className` | `string` | — | Additional CSS class on the outermost wrapper |
+| `manageOwnRefreshToken` | `boolean` | — | `true` (default): widget manages its own session in `localStorage`. `false`: host app owns the session; pass a fresh `token` on each mount. |
+| `token` | `string` | — | One-time token for host-managed auth handoff |
+| `hideSignOut` | `boolean` | — | Suppress the widget's built-in Sign Out button |
+| `hideAdmin` | `boolean` | — | Suppress the admin gear icon |
+| `onSessionEnded` | `(reason) => void` | — | Called when the session ends (`'logout'` or `'refresh-failed'`) |
+
+## Troubleshooting
+
+**API calls are hitting my app's server instead of Relaya**
+
+Ensure `serverUrl` is set to `"https://api.relaya.chat"` (or your self-hosted URL). The SDK routes _all_ requests — REST and real-time WebSocket — through this base URL. No proxy routes or backend setup are required in your host app.
+
+```tsx
+// ✓ Correct — all requests go directly to api.relaya.chat
+<RelayaChat spaceSlug="my-space" serverUrl="https://api.relaya.chat" />
+
+// ✗ Wrong — omitting serverUrl defaults to same-origin (relative paths), causing 404s
+<RelayaChat spaceSlug="my-space" serverUrl="" />
+```
+
+---
+
 ## Features
 
 - **Real-time messaging** via WebSocket — auto-reconnects on network drops, no polling

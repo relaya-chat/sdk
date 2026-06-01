@@ -40,6 +40,8 @@ import { useNotificationMute } from '../contexts/NotificationMuteContext.js';
 
 export interface RelayaChatOptions {
   onStickersUpdated?: () => void;
+  /** Base URL for REST API calls. Pass `"https://api.relaya.chat"` for Relaya SaaS, or `""` for same-origin. */
+  serverUrl?: string;
   /** Base URL for WebSocket connections. Empty/undefined keeps same-origin behavior. */
   wsBaseUrl?: string;
   /**
@@ -137,7 +139,7 @@ export function useRelayaChat(
   // Avatar history for temporal tracking (session-only)
   const avatarHistory = useRef<Map<string, AvatarChange[]>>(new Map());
 
-  const api = useRef(new ApiClient(API_BASE_URL, getToken)).current;
+  const api = useRef(new ApiClient(options?.serverUrl ?? API_BASE_URL, getToken)).current;
 
   // Refs to hold latest callback versions (defined after callbacks below)
   const handleWsMessageRef = useRef<((msg: WsServerMessage) => void) | null>(null);
