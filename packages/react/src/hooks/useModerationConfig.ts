@@ -9,7 +9,7 @@ import { useState, useCallback } from 'react';
 import { ApiClient, PERMISSIONS } from '@relaya-chat/core';
 import type { ModerationConfig } from '@relaya-chat/core';
 import type { AuthActions, AuthUser } from './useRelayaAuth.js';
-import { API_BASE_URL } from '../config.js';
+import { useServerUrl } from '../contexts/RelayaServerContext.js';
 
 export interface ModerationConfigState {
   config: ModerationConfig | null;
@@ -37,7 +37,8 @@ export function useModerationConfig(
     note: null,
   });
 
-  const api = new ApiClient(API_BASE_URL, getToken);
+  const serverUrl = useServerUrl();
+  const api = new ApiClient(serverUrl, getToken);
 
   const isAdmin = user?.permissions.includes(PERMISSIONS.MANAGE_ROLES) ?? false;
 

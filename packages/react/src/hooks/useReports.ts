@@ -16,7 +16,7 @@ import { useState, useCallback, useRef } from 'react';
 import { ApiClient, PERMISSIONS } from '@relaya-chat/core';
 import type { ReportWithDetails } from '@relaya-chat/core';
 import type { AuthActions, AuthUser } from './useRelayaAuth.js';
-import { API_BASE_URL } from '../config.js';
+import { useServerUrl } from '../contexts/RelayaServerContext.js';
 
 export const REPORTS_PAGE_LIMIT = 20;
 
@@ -73,7 +73,8 @@ export function useReports(
 
   // Create a stable ApiClient instance. We pass getToken as a callback so the
   // client always picks up the latest token without being recreated on every render.
-  const apiRef = useRef(new ApiClient(API_BASE_URL, getToken));
+  const serverUrl = useServerUrl();
+  const apiRef = useRef(new ApiClient(serverUrl, getToken));
 
   const loadReports = useCallback(async (offset?: number) => {
     if (!canModerate || !stationSlug) return;

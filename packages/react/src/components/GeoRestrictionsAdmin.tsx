@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { API_BASE_URL } from '../config.js';
+import { useServerUrl } from '../contexts/RelayaServerContext.js';
 import type { AuthActions } from '../hooks/useRelayaAuth.js';
 import { SORTED_COUNTRIES, countryChipLabel, countryLabel } from './countryNames.js';
 
@@ -48,7 +48,8 @@ function formatExpiry(ban: IpBan): string {
 }
 
 export default function GeoRestrictionsAdmin({ stationSlug, getToken }: GeoRestrictionsAdminProps) {
-  const base = `${API_BASE_URL}/api/chat/${stationSlug}`;
+  const serverUrl = useServerUrl();
+  const base = `${serverUrl}/api/chat/${stationSlug}`;
 
   // ── state ──────────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);

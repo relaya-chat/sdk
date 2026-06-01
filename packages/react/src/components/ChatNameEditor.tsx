@@ -14,7 +14,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { ApiClient } from '@relaya-chat/core';
-import { API_BASE_URL } from '../config.js';
+import { useServerUrl } from '../contexts/RelayaServerContext.js';
 
 interface ChatNameEditorProps {
   stationSlug: string;
@@ -37,7 +37,8 @@ export default function ChatNameEditor({
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const api = useRef(new ApiClient(API_BASE_URL, getToken)).current;
+  const serverUrl = useServerUrl();
+  const api = useRef(new ApiClient(serverUrl, getToken)).current;
 
   // Sync when the parent loads the actual chat name after mounting
   // (e.g. from GET /me). useState(initialChatName) only reads the prop once;

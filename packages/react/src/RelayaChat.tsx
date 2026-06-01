@@ -37,6 +37,7 @@ import { applyDbTheme } from './hooks/useSpaceTheme.js';
 import { getSpaceTheme, applySpaceTheme } from './spaceThemes.js';
 import { NotificationMuteProvider } from './contexts/NotificationMuteContext.js';
 import { appConfig } from './config.js';
+import { RelayaServerProvider } from './contexts/RelayaServerContext.js';
 import { AdminPanel } from './AdminPanel.js';
 import LoginScreen from './components/LoginScreen.js';
 import MagicLinkSent from './components/MagicLinkSent.js';
@@ -100,21 +101,24 @@ export interface RelayaChatProps {
  * appConfig.admin is a module-level constant (set once from URL params at load time).
  */
 export function RelayaChat(props: RelayaChatProps) {
-  // Admin popup mode: render the self-contained admin panel instead of the chat window.
-  // appConfig.admin is set by ?admin=true in the URL; the gear icon in ChatWindow opens it.
-  if (appConfig.admin) {
-    return (
-      <AdminPanel
-        className={props.className}
-        spaceSlug={props.spaceSlug}
-        serverUrl={props.serverUrl}
-        token={props.token}
-        manageOwnRefreshToken={props.manageOwnRefreshToken}
-        onSessionEnded={props.onSessionEnded}
-      />
-    );
-  }
-  return <ChatView {...props} />;
+  // Wrap with RelayaServerProvider so all hooks and components in the tree
+  // can access serverUrl via useServerUrl() without prop drilling.
+  return (
+    <RelayaServerProvider serverUrl={props.serverUrl}>
+      {appConfig.admin ? (
+        <AdminPanel
+          className={props.className}
+          spaceSlug={props.spaceSlug}
+          serverUrl={props.serverUrl}
+          token={props.token}
+          manageOwnRefreshToken={props.manageOwnRefreshToken}
+          onSessionEnded={props.onSessionEnded}
+        />
+      ) : (
+        <ChatView {...props} />
+      )}
+    </RelayaServerProvider>
+  );
 }
 
 /**

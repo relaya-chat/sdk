@@ -9,7 +9,7 @@
  */
 
 import React, { useState } from 'react';
-import { API_BASE_URL } from '../config.js';
+import { useServerUrl } from '../contexts/RelayaServerContext.js';
 import type { AuthActions } from '../hooks/useRelayaAuth.js';
 
 interface ExportAdminPageProps {
@@ -35,6 +35,7 @@ const EXCLUDE_REQUIRED_MSG =
   'Choose a date to limit how far back they appear in this export.';
 
 export default function ExportAdminPage({ stationSlug, getToken }: ExportAdminPageProps) {
+  const serverUrl = useServerUrl();
   const defaults = defaultDates();
   const [from, setFrom] = useState(defaults.from);
   const [to, setTo] = useState(defaults.to);
@@ -58,7 +59,7 @@ export default function ExportAdminPage({ stationSlug, getToken }: ExportAdminPa
       if (from) params.set('from', from + 'T00:00:00Z');
       if (to) params.set('to', to + 'T23:59:59Z');
       params.set('excludeReportedBefore', excludeReportedBefore + 'T00:00:00Z');
-      const url = `${API_BASE_URL}/api/chat/${stationSlug}/export/messages?${params.toString()}`;
+      const url = `${serverUrl}/api/chat/${stationSlug}/export/messages?${params.toString()}`;
       const token = getToken();
       const hdrs: Record<string, string> = {};
       if (token) hdrs['Authorization'] = `Bearer ${token}`;

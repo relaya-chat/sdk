@@ -4,7 +4,9 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRelayaChat } from '../hooks/useRelayaChat.js';
 import { PERMISSIONS, ApiClient } from '@relaya-chat/core';
 import type { StationSoundsResponse } from '@relaya-chat/core';
-import { HiOutlineCog6Tooth } from 'react-icons/hi2';
+import { HiOutlineCog6Tooth as _HiOutlineCog6Tooth } from 'react-icons/hi2';
+// Cast resolves react-icons IconType vs @types/react ReactNode incompatibility (bigint in ReactNode)
+const HiOutlineCog6Tooth = _HiOutlineCog6Tooth as React.FC<React.SVGProps<SVGSVGElement>>;
 import MessageList from './MessageList.js';
 import MessageInput from './MessageInput.js';
 import UserList from './UserList.js';
@@ -17,7 +19,7 @@ import MuteToggle from './MuteToggle.js';
 import PaneDivider from './PaneDivider.js';
 import type { AuthState, AuthActions } from '../hooks/useRelayaAuth.js';
 import type { ReplyingTo } from './MessageInput.js';
-import { API_BASE_URL, appConfig } from '../config.js';
+import { appConfig } from '../config.js';
 
 interface ChatWindowProps {
   auth: AuthState & AuthActions;
@@ -52,7 +54,7 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
   const [replyingTo, setReplyingTo] = useState<ReplyingTo | null>(null);
   const [stickers, setStickers] = useState([] as Awaited<ReturnType<ApiClient['getStickers']>>['stickers']);
   const [soundUrls, setSoundUrls] = useState<StationSoundsResponse>({ mentionSoundUrl: null, channelSoundUrl: null });
-  const apiRef = useRef(new ApiClient(serverUrl ?? API_BASE_URL, getToken));
+  const apiRef = useRef(new ApiClient(serverUrl ?? '', getToken));
 
   // ── Sidebar resize state ──────────────────────────────────────────────────
   const chatBodyRef = useRef<HTMLDivElement>(null);

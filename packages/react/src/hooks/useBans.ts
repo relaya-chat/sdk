@@ -10,7 +10,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { ApiClient, PERMISSIONS } from '@relaya-chat/core';
 import type { AuthActions, AuthUser } from './useRelayaAuth.js';
-import { API_BASE_URL } from '../config.js';
+import { useServerUrl } from '../contexts/RelayaServerContext.js';
 
 export interface BanEntry {
   banId: string;
@@ -49,7 +49,8 @@ export function useBans(
   });
 
   const canModerate = user?.permissions.includes(PERMISSIONS.BAN_USER) ?? false;
-  const apiRef = useRef(new ApiClient(API_BASE_URL, getToken));
+  const serverUrl = useServerUrl();
+  const apiRef = useRef(new ApiClient(serverUrl, getToken));
 
   const loadBans = useCallback(async () => {
     if (!canModerate || !stationSlug) return;

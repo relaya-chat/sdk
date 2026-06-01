@@ -2,7 +2,7 @@
 // See LICENSE file at https://github.com/relaya-chat/sdk
 import React, { useEffect, useRef, useState } from 'react';
 import { ApiClient, PERMISSIONS, type StickerListing } from '@relaya-chat/core';
-import { API_BASE_URL } from '../config.js';
+import { useServerUrl } from '../contexts/RelayaServerContext.js';
 import type { AuthActions, AuthUser } from '../hooks/useRelayaAuth.js';
 import { reorderStickersByFilename } from '../stickerAdminUtils.js';
 
@@ -47,7 +47,8 @@ export default function StickerAdminPage({
   onClose,
   onLibraryChanged,
 }: StickerAdminPageProps) {
-  const api = useRef(new ApiClient(API_BASE_URL, getToken)).current;
+  const serverUrl = useServerUrl();
+  const api = useRef(new ApiClient(serverUrl, getToken)).current;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [stickers, setStickers] = useState<StickerListing[]>([]);

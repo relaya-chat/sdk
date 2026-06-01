@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ApiClient, PERMISSIONS } from '@relaya-chat/core';
 import type { AdminMember } from '@relaya-chat/core';
-import { API_BASE_URL } from '../config.js';
+import { useServerUrl } from '../contexts/RelayaServerContext.js';
 import type { AuthActions, AuthUser } from '../hooks/useRelayaAuth.js';
 
 interface ModeratorAdminPageProps {
@@ -28,7 +28,8 @@ export default function ModeratorAdminPage({
   user,
   getToken,
 }: ModeratorAdminPageProps) {
-  const api = useRef(new ApiClient(API_BASE_URL, getToken)).current;
+  const serverUrl = useServerUrl();
+  const api = useRef(new ApiClient(serverUrl, getToken)).current;
 
   const [members, setMembers] = useState<AdminMember[]>([]);
   const [quota, setQuota] = useState<{ used: number; limit: number | null } | null>(null);

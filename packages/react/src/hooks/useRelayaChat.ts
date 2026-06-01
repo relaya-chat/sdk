@@ -35,7 +35,7 @@ import type { ConnectionStatus } from '@relaya-chat/core';
 import { createWsMessageHandler } from './chatWsHandlers.js';
 import type { WsHandlerRefs } from './chatWsHandlers.js';
 import type { AuthActions, AuthState, AuthStation, AuthUser } from './useRelayaAuth.js';
-import { API_BASE_URL, buildWsUrl } from '../config.js';
+import { buildWsUrl } from '../config.js';
 import { useNotificationMute } from '../contexts/NotificationMuteContext.js';
 
 export interface RelayaChatOptions {
@@ -139,7 +139,7 @@ export function useRelayaChat(
   // Avatar history for temporal tracking (session-only)
   const avatarHistory = useRef<Map<string, AvatarChange[]>>(new Map());
 
-  const api = useRef(new ApiClient(options?.serverUrl ?? API_BASE_URL, getToken)).current;
+  const api = useRef(new ApiClient(options?.serverUrl ?? '', getToken)).current;
 
   // Refs to hold latest callback versions (defined after callbacks below)
   const handleWsMessageRef = useRef<((msg: WsServerMessage) => void) | null>(null);

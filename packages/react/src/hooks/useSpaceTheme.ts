@@ -13,7 +13,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { ApiClient } from '@relaya-chat/core';
 import type { ThemeByMode } from '@relaya-chat/core';
-import { API_BASE_URL } from '../config.js';
+import { useServerUrl } from '../contexts/RelayaServerContext.js';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -80,7 +80,8 @@ export function useSpaceTheme(
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const clientRef = useRef(new ApiClient(API_BASE_URL, getToken));
+  const serverUrl = useServerUrl();
+  const clientRef = useRef(new ApiClient(serverUrl, getToken));
 
   const loadTheme = useCallback(async () => {
     setLoading(true);

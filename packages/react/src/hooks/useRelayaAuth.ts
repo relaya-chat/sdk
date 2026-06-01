@@ -18,7 +18,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { ApiClient } from '@relaya-chat/core';
 import type { AuthVerifyResponse } from '@relaya-chat/core';
 export type { AuthVerifyResponse };
-import { appConfig, API_BASE_URL } from '../config.js';
+import { appConfig } from '../config.js';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -152,7 +152,7 @@ function verifyOneTimeToken(baseUrl: string, token: string, stationSlug: string)
 
 export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & AuthActions {
   const configuredSpaceSlug = options.spaceSlug ?? appConfig.spaceSlug;
-  const effectiveBaseUrl = options.serverUrl ?? API_BASE_URL;
+  const effectiveBaseUrl = options.serverUrl ?? '';
   const configuredInitialToken = options.initialToken ?? null;
   // Storage ownership: when manageOwnRefreshToken is false, the host application
   // owns the RT. The widget must never read, write, or clear

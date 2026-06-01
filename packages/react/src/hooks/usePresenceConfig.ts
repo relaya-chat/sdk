@@ -9,7 +9,7 @@ import { useState, useCallback } from 'react';
 import { ApiClient, PERMISSIONS } from '@relaya-chat/core';
 import type { PresenceConfig } from '@relaya-chat/core';
 import type { AuthActions, AuthUser } from './useRelayaAuth.js';
-import { API_BASE_URL } from '../config.js';
+import { useServerUrl } from '../contexts/RelayaServerContext.js';
 
 export interface PresenceConfigState {
   config: PresenceConfig | null;
@@ -35,7 +35,8 @@ export function usePresenceConfig(
     error: null,
   });
 
-  const api = new ApiClient(API_BASE_URL, getToken);
+  const serverUrl = useServerUrl();
+  const api = new ApiClient(serverUrl, getToken);
 
   const isAdmin = user?.permissions.includes(PERMISSIONS.MANAGE_ROLES) ?? false;
 

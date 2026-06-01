@@ -67,7 +67,7 @@ export default function ChatScreen() {
 
 **API calls are hitting my app's server instead of Relaya**
 
-Ensure `serverUrl` is set to `"https://api.relaya.chat"` (or your self-hosted URL). The SDK routes _all_ requests — REST and real-time WebSocket — through this base URL. No proxy routes or backend setup are required in your host app.
+Ensure `serverUrl` is set to `"https://api.relaya.chat"`. The SDK routes _all_ requests — REST and real-time WebSocket — through this base URL. No proxy routes or backend setup are required in your host app.
 
 ```tsx
 // ✓ Correct — all requests go directly to api.relaya.chat
