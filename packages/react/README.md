@@ -78,7 +78,7 @@ Configurable message archive up to 180 days. Export your full chat history as CS
 
 ### 🔒 No-cookie architecture
 
-Auth uses short-lived tokens in memory + rotating refresh tokens in `sessionStorage`. No third-party cookies. No cookie-consent banner required. Works in cross-origin iframes (Wix, Squarespace) without issue.
+Auth uses a short-lived access token in memory + a rotating refresh token in `localStorage`. No cookies of any kind. No cookie-consent banner required. Works in cross-origin iframes (Wix, Squarespace) without issue.
 
 ---
 
@@ -222,14 +222,19 @@ All features above are available across three subscription tiers — from a simp
 
 ## Authentication Details
 
-Relaya uses a short-lived access token + rotating refresh token model with no third-party cookies:
+Relaya uses a short-lived access token + rotating refresh token model with no cookies:
 
-- Tokens live in memory and `sessionStorage` — no `localStorage`, no cookies
-- No cookie-consent banner required
+- The access token lives in memory only — never written to storage
+- The refresh token is stored in `localStorage` (key `relaya_refresh_token`) and persists across browser close/reopen
+- No cookies are used, so no cookie-consent banner is required
 - Works in cross-origin iframes (Wix, Squarespace)
-- Sessions last 33 days with active refresh; expire when the user closes the tab on fresh sign-in
+- Sessions last 33 days with active refresh (inactivity window)
 
-See [README-AUTH.md](./README-AUTH.md) for the full token lifecycle, session behavior, and sign-out details.
+See [README-AUTH.md](./README-AUTH.md) (in the GitHub repo) for the full token lifecycle, session behavior, and sign-out details.
+
+## Privacy & Data
+
+For exactly what user data Relaya collects through this SDK and how to reflect it in your own privacy policy, see [PRIVACY.md](./PRIVACY.md).
 
 ---
 

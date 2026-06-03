@@ -89,7 +89,7 @@ Ensure `serverUrl` is set to `"https://api.relaya.chat"`. The SDK routes _all_ r
 - **Chat history & export** — configurable archive up to 180 days, CSV export, searchable from admin
 - **Custom branding** — visual theme editor, CSS custom properties, light/dark mode
 - **Country & IP controls** — country allowlist/blocklist and IP ban tools for compliance and abuse management
-- **No-cookie architecture** — tokens in memory + `sessionStorage`; no cookie-consent banner; works in cross-origin iframes
+- **No-cookie architecture** — access token in memory + refresh token in `localStorage`; no cookies; no cookie-consent banner; works in cross-origin iframes
 - **App Store compliant** — built to satisfy Apple's UGC guidelines from day one
 - **Three integration paths** — iframe embed (no-code), React component, React Native hooks — one subscription covers all
 - **TypeScript** — fully typed, strict mode
@@ -103,6 +103,7 @@ Sign up at [relaya.chat](https://relaya.chat) to create a space (your chat commu
 - [Embedder contract](https://relaya.chat/docs) — props, hooks, events reference
 - [Theming guide](https://relaya.chat/docs/theming) — CSS custom properties
 - [Admin panel](https://relaya.chat/docs/admin) — moderation features
+- [Privacy & data handling](packages/react/PRIVACY.md) — what Relaya collects, for your own privacy policy
 
 ## Contributing
 
