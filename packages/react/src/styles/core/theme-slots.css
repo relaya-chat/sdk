@@ -16,6 +16,10 @@
 
 :root,
 [data-theme="light"] {
+  /* Header bar background defers to the compile-time space theme, then the base surface colour.
+     Admin overrides (applied as inline style on :root) always win. */
+  --relaya-color-header-bg:       var(--sp-title-bg);
+
   /* Bubble colours defer to the station-theme vars first, then fall back to the base palette.
      This ensures the admin editor probe reads the actual rendered colour and that
      admin overrides (applied as inline style on :root) take effect in the chat. */

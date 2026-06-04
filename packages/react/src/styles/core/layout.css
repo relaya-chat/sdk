@@ -23,7 +23,7 @@
   gap: var(--spacing-sm);
   padding: 0 var(--spacing-md);
   height: var(--header-height);
-  background: var(--sp-title-bg);
+  background: var(--relaya-color-header-bg);
   border-bottom: 1px solid color-mix(in srgb, var(--relaya-color-border) 40%, transparent);
   flex-shrink: 0;
   z-index: 10;

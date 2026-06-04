@@ -26,6 +26,10 @@ export interface SpaceTheme {
   onlineTextColor: string;
   /** T7: Text color for "No display name" / chat-name prompt */
   noNameTextColor: string;
+  /** T6: Icon/button color for controls in the header bar (e.g. mute toggle).
+   *  Defaults to white so icons are visible on dark header bars.
+   *  Set to a dark value when using a light-coloured header background. */
+  headerIconColor?: string;
   /** T10: Header button border color; use 'transparent' for borderless */
   buttonBorderColor: string;
   /** T11: Header button interior/background color */
@@ -132,9 +136,10 @@ export function applySpaceTheme(theme: SpaceTheme): void {
   set('--sp-ui-font',       theme.uiFontFamily);
   set('--sp-online-color',  theme.onlineTextColor);
   set('--sp-no-name-color', theme.noNameTextColor);
-  set('--sp-btn-border',    theme.buttonBorderColor);
-  set('--sp-btn-bg',        theme.buttonBg);
-  set('--sp-btn-text',      theme.buttonTextColor);
+  set('--sp-btn-border',        theme.buttonBorderColor);
+  set('--sp-btn-bg',            theme.buttonBg);
+  set('--sp-btn-text',          theme.buttonTextColor);
+  set('--sp-header-icon-color', theme.headerIconColor);
 
   // Messages
   set('--sp-avatar-bg',        theme.avatarBg);

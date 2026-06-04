@@ -143,20 +143,60 @@ The hooks handle all state, connection management, and auth token refresh. The c
 
 ---
 
-## Custom Fonts
+## Theming
 
-The SDK uses a system font stack by default (`-apple-system`, `BlinkMacSystemFont`, `Segoe UI`, etc.). No custom font is bundled or fetched — you supply your own if you want one.
+### CSS variable overrides
 
-To use a custom font, load it however your framework prefers, then override the `--sp-ui-font` CSS variable on `.relaya-root`:
+The complete `--sp-*` surface is public and stable. Override any of these on `.relaya-root` in your own stylesheet — no `!important` required:
+
+**Header / title bar**
+
+| Variable | What it controls | Default |
+|---|---|---|
+| `--sp-title-bg` | Header background color | `var(--relaya-color-surface)` |
+| `--sp-name-color` | Space name text color | `var(--relaya-color-text)` |
+| `--sp-name-font` | Space name font family | `inherit` |
+| `--sp-ui-font` | All header UI text + body text font | system font stack |
+| `--sp-online-color` | "N online" count text color | `var(--relaya-color-text-muted)` |
+| `--sp-no-name-color` | "No display name" prompt text | `var(--relaya-color-text-muted)` |
+| `--sp-header-icon-color` | Mute button and header icon color | `var(--relaya-color-status-text)` |
+| `--sp-btn-border` | Header button border | `var(--relaya-color-border)` |
+| `--sp-btn-bg` | Header button background | `var(--relaya-color-surface)` |
+| `--sp-btn-text` | Header button text/icon color | `var(--relaya-color-text)` |
+
+**Messages**
+
+| Variable | What it controls | Default |
+|---|---|---|
+| `--sp-own-msg-bg` | Own message bubble background | `var(--relaya-color-own-msg-bg)` |
+| `--sp-own-msg-text` | Own message text color | `var(--relaya-color-own-msg-text)` |
+| `--sp-other-msg-bg` | Others' message bubble background | `var(--relaya-color-other-msg-bg)` |
+| `--sp-other-msg-text` | Others' message text color | `var(--relaya-color-other-msg-text)` |
+| `--sp-avatar-bg` | Avatar circle background | `var(--relaya-color-accent)` |
+| `--sp-avatar-text` | Avatar initials color | `#ffffff` |
+| `--sp-msg-font` | Message body font family | `inherit` |
+| `--sp-msg-font-size` | Message body font size | `15px` |
+| `--sp-time-color` | Timestamp label color | `var(--relaya-color-text-faint)` |
+| `--sp-send-btn-bg` | Send button background | inherits `--sp-own-msg-bg` |
+| `--sp-send-btn-text` | Send button icon color | inherits `--sp-own-msg-text` |
+
+**Example — dark header with custom font:**
 
 ```css
-/* In your own stylesheet, after loading your font */
 .relaya-root {
-  --sp-ui-font: 'Geist', sans-serif;
+  --sp-title-bg: #1a1a2e;
+  --sp-name-color: #ffffff;
+  --sp-online-color: rgba(255,255,255,0.7);
+  --sp-header-icon-color: #ffffff;
+  --sp-ui-font: 'Inter', sans-serif;
 }
 ```
 
-**Loading the font — framework examples:**
+**Note:** When an admin saves a colour override via the space theme editor (in the chat's admin panel), that override takes priority over CSS variable values set here. The two layers coexist cleanly.
+
+### Custom fonts
+
+The SDK uses a system font stack by default. Load your own font, then set `--sp-ui-font`:
 
 ```tsx
 // Next.js (next/font)
@@ -168,22 +208,52 @@ import { GeistSans } from 'geist/font/sans';
 ```
 
 ```css
-/* Plain CSS — self-hosted */
-@font-face {
-  font-family: 'Geist';
-  src: url('/fonts/Geist-Variable.woff2') format('woff2-variations');
-  font-weight: 100 900;
-  font-display: swap;
-}
-```
-
-```css
 /* Google Fonts or any CDN */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 .relaya-root {
   --sp-ui-font: 'Inter', sans-serif;
 }
+```
+
+### Dark mode
+
+**Option 1 — `theme` prop (recommended for React apps):**
+
+Pass your app's resolved theme directly. The widget re-renders immediately when it changes:
+
+```tsx
+import { useTheme } from 'next-themes'; // or any theme context
+
+export default function CommunityPage() {
+  const { resolvedTheme } = useTheme();
+  return (
+    <RelayaChat
+      spaceSlug="your-space-slug"
+      serverUrl="https://api.relaya.chat"
+      theme={resolvedTheme as 'light' | 'dark'}
+    />
+  );
+}
+```
+
+**Option 2 — CSS class (automatic for Tailwind / `.dark` pattern):**
+
+If your app applies a `.dark` class to `<html>` (the Tailwind / next-themes default), Relaya switches automatically — no prop needed:
+
+```tsx
+// tailwind.config.js: darkMode: 'class'
+// next-themes: attribute="class"
+// → Relaya respects <html class="dark"> automatically
+<RelayaChat spaceSlug="your-space-slug" serverUrl="https://api.relaya.chat" />
+```
+
+**Option 3 — `data-theme` attribute:**
+
+Relaya also responds to `data-theme="dark"` on `<html>` (the `[data-theme]` pattern used by many design systems):
+
+```js
+document.documentElement.setAttribute('data-theme', 'dark');
 ```
 
 ---

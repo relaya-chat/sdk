@@ -24,10 +24,9 @@
  *   token      — (future) Pre-issued JWT for token delegation. Not yet used.
  *   className  — Additional CSS class applied to the outermost `.relaya-root` wrapper.
  *
- * Note: theme (light/dark) is NOT a prop. `useSpaceTheme` detects the active mode
- * via `prefers-color-scheme` and re-applies when the OS preference changes. The
- * `?theme=` URL param is parsed by `parseConfig()` for iframe backward compat but is
- * not a developer-facing prop.
+ * Note: theme (light/dark) may be passed as an optional `theme` prop. When omitted,
+ * the active mode is auto-detected from `prefers-color-scheme`. The `?theme=` URL
+ * param is also supported for iframe backward compat.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -93,6 +92,13 @@ export interface RelayaChatProps {
    * relaya.chat /account dashboard renders AdminPanel in the right pane).
    */
   hideAdmin?: boolean;
+  /**
+   * Light/dark theme override. When provided, overrides auto-detection
+   * (which falls back to `prefers-color-scheme`). Pass the resolved value
+   * from your app's theme context — e.g. `resolvedTheme` from next-themes —
+   * to keep the widget in sync with the host page's theme switching.
+   */
+  theme?: 'light' | 'dark';
 }
 
 
@@ -134,6 +140,7 @@ function ChatView({
   onSessionEnded,
   hideSignOut,
   hideAdmin,
+  theme,
 }: RelayaChatProps) {
   // Default storage-ownership: explicit prop wins; otherwise derive from the
   // ?managed=host URL param so iframe embeds opt into host-managed mode
@@ -162,10 +169,14 @@ function ChatView({
     injectRelayaStyles();
   }, []);
 
+  // Prop wins; fall back to auto-detected value from URL param / prefers-color-scheme.
+  const resolvedTheme = theme ?? appConfig.theme;
+
   // Apply data-theme attribute and station-specific CSS custom properties,
   // then overlay any admin-saved DB theme overrides on top.
+  // Re-runs when resolvedTheme changes so host-driven theme switching is reactive.
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', appConfig.theme);
+    document.documentElement.setAttribute('data-theme', resolvedTheme);
 
     const spaceTheme = getSpaceTheme(spaceSlug);
     if (spaceTheme) applySpaceTheme(spaceTheme);
@@ -183,12 +194,12 @@ function ChatView({
         if (hasOverrides) {
           applyDbTheme(
             { light: dbTheme.light ?? {}, dark: dbTheme.dark ?? {} },
-            appConfig.theme
+            resolvedTheme
           );
         }
       })
       .catch(() => { /* ignore — theme is cosmetic, not critical */ });
-  }, [serverUrl, spaceSlug]);
+  }, [serverUrl, spaceSlug, resolvedTheme]);
 
   // Fetch per-space branding flag from the public config endpoint.
   // Defaults to true (show badge) until the server responds.

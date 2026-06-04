@@ -33,6 +33,7 @@ const THEME_FIELDS: Array<{
   lightDefault: string;
   darkDefault: string;
 }> = [
+  { key: '--relaya-color-header-bg',      label: 'Header bar background',     hint: 'Top bar / title strip background',        lightDefault: '#7391a7', darkDefault: '#7391a7' },
   { key: '--relaya-color-bg',             label: 'Chat background',           hint: 'Outermost container background',          lightDefault: '#f0f2f5', darkDefault: '#0d1117' },
   { key: '--relaya-color-message-bg',     label: "Others' message bubbles",   hint: 'Bubble background for received messages', lightDefault: '#e9ecef', darkDefault: '#21262d' },
   { key: '--relaya-color-message-own-bg', label: 'Your message bubbles',      hint: 'Bubble background for sent messages',     lightDefault: '#007aff', darkDefault: '#1f6feb' },

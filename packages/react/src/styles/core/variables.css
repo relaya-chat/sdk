@@ -61,6 +61,7 @@
   --sp-btn-border:    var(--relaya-color-border);
   --sp-btn-bg:        var(--relaya-color-surface);
   --sp-btn-text:      var(--relaya-color-text);
+  --sp-header-icon-color: var(--relaya-color-status-text);
   /* Messages */
   --sp-avatar-bg:        var(--relaya-color-accent);
   --sp-avatar-text:      #ffffff;
@@ -76,7 +77,8 @@
   --sp-send-btn-text:    var(--sp-own-msg-text);
 }
 
-[data-theme="dark"] {
+[data-theme="dark"],
+.dark {
   --relaya-color-bg: #0d1117;
   --relaya-color-surface: #161b22;
   --relaya-color-surface-2: #21262d;
