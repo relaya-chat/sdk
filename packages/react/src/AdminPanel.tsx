@@ -27,6 +27,7 @@ import ThemeAdminPage from './components/ThemeAdminPage.js';
 import ExportAdminPage from './components/ExportAdminPage.js';
 import GeoRestrictionsAdmin from './components/GeoRestrictionsAdmin.js';
 import ModeratorAdminPage from './components/ModeratorAdminPage.js';
+import SpaceHeaderNameAdmin from './components/SpaceHeaderNameAdmin.js';
 
 export interface AdminPanelProps {
   /** Additional CSS class applied alongside relaya-root on the wrapper element. */
@@ -61,7 +62,7 @@ export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manage
     onSessionEnded,
   });
 
-  const { user, stationSlug, getToken } = auth;
+  const { user, station, stationSlug, getToken } = auth;
 
   // Apply station theme and DB theme overrides — mirrors what ChatView does in RelayaChat.tsx.
   useEffect(() => {
@@ -91,6 +92,8 @@ export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manage
 
   // Toggle state for collapsible admin-only sections
   const [stickerOpen, setStickerOpen] = useState(false);
+  const [headerNameOpen, setHeaderNameOpen] = useState(false);
+  const [headerName, setHeaderName] = useState<string | null>(station?.headerName ?? null);
   const [themeOpen, setThemeOpen] = useState(false);
   const [moderatorsOpen, setModeratorsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
@@ -148,7 +151,7 @@ export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manage
       <div className="admin-panel">
         <div className="admin-panel__header">
           <h1 className="admin-panel__title">
-            {stationSlug
+            {station?.name ?? stationSlug
               .split('-')
               .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
               .join(' ')}{' '}
@@ -183,13 +186,36 @@ export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manage
             </section>
           )}
 
-          {/* Colour theme — admins only */}
+          {/* Space display name — admins only */}
+          {isAdmin && (
+            <section className="admin-panel__section">
+              <div className="admin-settings">
+                <button className="admin-settings__toggle" onClick={() => setHeaderNameOpen((o) => !o)}>
+                  <span>{headerNameOpen ? '▼' : '▶'}</span>
+                  <span>Space display name</span>
+                </button>
+                {headerNameOpen && (
+                  <div className="admin-settings__panel">
+                    <SpaceHeaderNameAdmin
+                      stationSlug={stationSlug}
+                      serverUrl={serverUrl}
+                      getToken={getToken}
+                      initialHeaderName={headerName}
+                      onSaved={(newName) => setHeaderName(newName)}
+                    />
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Theme — admins only */}
           {isAdmin && (
             <section className="admin-panel__section">
               <div className="admin-settings">
                 <button className="admin-settings__toggle" onClick={() => setThemeOpen((o) => !o)}>
                   <span>{themeOpen ? '▼' : '▶'}</span>
-                  <span>Color theme</span>
+                  <span>Theme</span>
                 </button>
                 {themeOpen && (
                   <div className="admin-settings__panel">

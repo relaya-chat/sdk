@@ -49,6 +49,8 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
   const { user, station, stationSlug, getToken } = auth;
 
   const [chatName, setChatName] = useState<string | null>(user?.chatName ?? null);
+  // Cosmetic header name fetched fresh on mount; falls back to station.name or slug-formatted name.
+  const [stationHeaderName, setStationHeaderName] = useState<string | null>(station?.headerName ?? null);
   const [showUserListModal, setShowUserListModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ReplyingTo | null>(null);
@@ -149,7 +151,18 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
   // Embed mode: set by ?embed=true URL param
   const isEmbedded = appConfig.embed;
 
-  const stationLabel = station?.name || stationSlug
+  // Fetch station on mount to get the cosmetic header name (works for both authenticated
+  // and anonymous users — this is a public endpoint).
+  useEffect(() => {
+    apiRef.current.getStation(stationSlug)
+      .then((info) => {
+        const hn = ((info as unknown) as Record<string, unknown>).headerName as string | null ?? null;
+        setStationHeaderName(hn);
+      })
+      .catch(() => { /* non-critical */ });
+  }, [stationSlug]);
+
+  const stationLabel = stationHeaderName ?? station?.name ?? stationSlug
     .split('-')
     .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');

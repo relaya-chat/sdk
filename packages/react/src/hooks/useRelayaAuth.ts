@@ -42,6 +42,8 @@ export interface AuthStation {
   id: string;
   name: string;
   slug: string;
+  /** Cosmetic header display name. Null = use the official name. */
+  headerName?: string | null;
 }
 
 export interface AuthState {
@@ -316,6 +318,9 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
           id: stationData.id,
           name: stationData.name,
           slug: stationData.slug,
+          // headerName lives in the server response but not yet in the compiled @relaya-chat/core dist type.
+          // Double-cast through unknown until the next SDK release rebuilds the dist.
+          headerName: ((stationData as unknown) as Record<string, unknown>).headerName as string | null ?? null,
         },
         stationSlug: stationData.slug,
         error: null,

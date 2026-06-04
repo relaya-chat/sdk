@@ -139,6 +139,18 @@ export interface GetMembersAdminResponse {
   quota: { used: number; limit: number | null };
 }
 
+/** Response from GET /api/chat/stations/:slug */
+export interface StationInfoResponse {
+  id: string;
+  stationId: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  isActive: boolean;
+  /** Cosmetic header display name. Null = use the official name. */
+  headerName: string | null;
+}
+
 // ==================== CLIENT ====================
 
 export class ApiClient {
@@ -254,8 +266,19 @@ export class ApiClient {
 
   // ── Station ───────────────────────────────────────────────────────────────
 
-  async getStation(slug: string): Promise<Station> {
+  async getStation(slug: string): Promise<StationInfoResponse> {
     return this.request('GET', `/api/chat/stations/${encodeURIComponent(slug)}`);
+  }
+
+  /**
+   * Admin-only: update the cosmetic header display name for a space.
+   * Pass null to clear the override (reverts to the official space name).
+   */
+  async updateStationHeaderName(
+    stationSlug: string,
+    headerName: string | null
+  ): Promise<{ headerName: string | null }> {
+    return this.request('PATCH', `/api/chat/${encodeURIComponent(stationSlug)}/station`, { headerName });
   }
 
   // ── Messages ──────────────────────────────────────────────────────────────

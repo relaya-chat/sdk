@@ -16,6 +16,8 @@ export interface Station {
   updated_at: Date;
   /** How long (ms) a user stays in the online list after their WS closes. Default 120 000. */
   presence_grace_period_ms: number;
+  /** Optional cosmetic display name shown in the chat header bar. Null = use name. */
+  header_name?: string | null;
 }
 
 export interface User {
