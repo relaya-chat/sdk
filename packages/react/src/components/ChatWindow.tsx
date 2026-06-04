@@ -344,6 +344,7 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
       {showUserListModal && (
         <UserListModal
           users={chat.users}
+          anonymousCount={Math.max(0, chat.totalCount - chat.users.length)}
           currentUserId={user?.id ?? ''}
           onClose={() => setShowUserListModal(false)}
         />

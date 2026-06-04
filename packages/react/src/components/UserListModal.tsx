@@ -14,6 +14,7 @@ import type { OnlineUser } from '../hooks/useRelayaChat.js';
 
 interface UserListModalProps {
   users: OnlineUser[];
+  anonymousCount: number;
   currentUserId: string;
   onClose: () => void;
 }
@@ -27,7 +28,7 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export default function UserListModal({ users, currentUserId, onClose }: UserListModalProps) {
+export default function UserListModal({ users, anonymousCount, currentUserId, onClose }: UserListModalProps) {
   // Close on Escape
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
@@ -43,7 +44,7 @@ export default function UserListModal({ users, currentUserId, onClose }: UserLis
       <div className="modal user-list-modal" onClick={(e) => e.stopPropagation()}>
         {/* ── Header ── */}
         <div className="modal__title user-list-modal__header">
-          <span>Online — {users.length}</span>
+          <span>Online — {users.length + anonymousCount}</span>
           <button
             className="btn btn--icon user-list-modal__close"
             onClick={onClose}
@@ -56,18 +57,26 @@ export default function UserListModal({ users, currentUserId, onClose }: UserLis
 
         {/* ── User list ── */}
         <div className="modal__body user-list-modal__body">
-          {users.length === 0 ? (
+          {users.length === 0 && anonymousCount === 0 ? (
             <p style={{ color: 'var(--color-text-muted)' }}>No listeners online.</p>
           ) : (
-            users.map((user) => (
-              <div key={user.id} className="user-list__item user-list-modal__item">
-                <div className="user-list__avatar">{getInitials(user.displayName)}</div>
-                <span className="user-list__name">{user.displayName}</span>
-                {user.id === currentUserId && (
-                  <span className="user-list__self-badge">you</span>
-                )}
-              </div>
-            ))
+            <>
+              {users.map((user) => (
+                <div key={user.id} className="user-list__item user-list-modal__item">
+                  <div className="user-list__avatar">{getInitials(user.displayName)}</div>
+                  <span className="user-list__name">{user.displayName}</span>
+                  {user.id === currentUserId && (
+                    <span className="user-list__self-badge">you</span>
+                  )}
+                </div>
+              ))}
+              {anonymousCount > 0 && (
+                <div className="user-list__item user-list-modal__item user-list-modal__item--anonymous">
+                  <div className="user-list__avatar">?</div>
+                  <span className="user-list__name">{anonymousCount} guest{anonymousCount === 1 ? '' : 's'}</span>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
