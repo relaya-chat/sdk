@@ -58,24 +58,50 @@ export default function MessageList({
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const isInitializing = useRef(true);
 
-  // Auto-scroll to bottom on new messages, unless user has scrolled up
-  // Skip during initial load to prevent conflicts with initial scroll effect
+  // Tracks whether a programmatic scroll is in flight. When true, handleScroll
+  // ignores events so intermediate scroll positions during smooth animations
+  // don't incorrectly hide autoScroll or show the scroll-to-bottom button.
+  const isProgrammaticScrollRef = useRef(false);
+
+  // Sets the programmatic-scroll flag and clears it once the animation settles.
+  // Uses the 'scrollend' event where available, with a setTimeout fallback for
+  // browsers that don't yet support it (e.g. older Safari).
+  function beginProgrammaticScroll(el: HTMLDivElement) {
+    isProgrammaticScrollRef.current = true;
+    let cleared = false;
+    const clearFlag = () => {
+      if (cleared) return;
+      cleared = true;
+      isProgrammaticScrollRef.current = false;
+    };
+    el.addEventListener('scrollend', clearFlag, { once: true });
+    setTimeout(clearFlag, 500);
+  }
+
+  // Auto-scroll to bottom on new messages, unless user has scrolled up.
+  // Skip during initial load to prevent conflicts with the initial scroll effect.
   useEffect(() => {
     if (autoScroll && !isInitializing.current && listRef.current) {
-      listRef.current.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
+      const el = listRef.current;
+      beginProgrammaticScroll(el);
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     }
   }, [messages.length, optimistic.length, autoScroll]);
 
-  // Scroll to bottom on initial load (after messages arrive)
+  // Scroll to bottom on initial load (after messages arrive).
   // Use double requestAnimationFrame to ensure layout is complete,
   // especially important for iframe contexts where parent page layout
   // can delay dimension finalization.
+  // Use 'instant' behavior to bypass scroll-behavior:smooth — the CSS property
+  // would otherwise animate the scroll from 0 to scrollHeight, causing
+  // handleScroll to fire at intermediate positions and incorrectly show the
+  // scroll-to-bottom button (or disable autoScroll) before the scroll completes.
   useEffect(() => {
     if (!loadingInitial && messages.length > 0 && isInitializing.current) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           if (listRef.current) {
-            listRef.current.scrollTop = listRef.current.scrollHeight;
+            listRef.current.scrollTo({ top: listRef.current.scrollHeight, behavior: 'instant' });
             isInitializing.current = false;
           }
         });
@@ -84,6 +110,9 @@ export default function MessageList({
   }, [loadingInitial, messages.length]);
 
   function handleScroll() {
+    // Ignore scroll events fired by programmatic scrolls. We only want to
+    // update autoScroll/showScrollBtn in response to user-initiated scrolling.
+    if (isProgrammaticScrollRef.current) return;
     const el = listRef.current;
     if (!el) return;
     const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
@@ -93,7 +122,10 @@ export default function MessageList({
   }
 
   function scrollToBottom() {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
+    const el = listRef.current;
+    if (!el) return;
+    beginProgrammaticScroll(el);
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     setAutoScroll(true);
     setShowScrollBtn(false);
   }
