@@ -8,6 +8,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.2.0] — 2026-06-04
+
+### Added
+
+- **`@relaya-chat/react`** — `theme` prop on `<RelayaChat>`: pass `'light'` or `'dark'` to override auto-detection from `prefers-color-scheme`. Pass your app's `resolvedTheme` (e.g. from `next-themes`) to keep the widget in sync with your host page's theme switching.
+- **`@relaya-chat/react`** — `headerIconColor` field added to the `SpaceTheme` interface, mapped to the `--sp-header-icon-color` CSS custom property. Controls the icon and button tint in the header bar (defaults to white; set to a dark value when using a light-coloured header background).
+- **`@relaya-chat/react`** — `SpaceHeaderNameAdmin` component (exported via `@relaya-chat/react/admin`). Admins can set a cosmetic display-name override shown in the chat header bar, independent of the space slug and billing records.
+- **`@relaya-chat/react`** — Anonymous guest count in `UserListModal`. Non-authenticated listeners are now shown as a single "N guests" row at the bottom of the online-users list, and the header count includes them in the total.
+- **`@relaya-chat/react`** — `PRIVACY.md` added to the package (also published to npm). Describes what user data Relaya collects and processes on the integrator's behalf — useful when writing your own privacy policy.
+
+### Fixed
+
+- **`@relaya-chat/react`** — Reliable initial scroll-to-bottom. The message list now uses a double `requestAnimationFrame` + `behavior: 'instant'` strategy on first load, preventing the scroll-to-bottom button from appearing spuriously (or `autoScroll` from being disabled) before layout is finalised — especially in iframe contexts where parent-page layout can delay dimension calculation.
+
+---
+
 ## [1.1.4] — 2026-06-01
 
 ### Fixed
