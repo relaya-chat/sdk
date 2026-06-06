@@ -110,6 +110,7 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
     serverUrl: serverUrl,
     wsBaseUrl: serverUrl,
     onForcedLogout: auth.logout,
+    ensureFreshToken: auth.ensureFreshToken,
   });
 
   useEffect(() => {

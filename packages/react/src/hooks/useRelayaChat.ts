@@ -50,6 +50,14 @@ export interface RelayaChatOptions {
    * so the user is returned to the login screen.
    */
   onForcedLogout?: () => void;
+  /**
+   * Called before opening (or reopening) a WebSocket connection when auth status
+   * is `'authenticated'`. Should refresh the AT if it is expired or expiring
+   * within ~2 minutes. Pass `auth.ensureFreshToken` from `useRelayaAuth`.
+   * Without this, a WS reconnect after a long absence may use a stale AT and
+   * enter a reconnect loop rather than succeeding immediately.
+   */
+  ensureFreshToken?: () => Promise<string | null>;
 }
 
 function buildWsUrlWithBase(baseUrl: string | undefined, stationSlug: string, token?: string): string {
@@ -265,9 +273,28 @@ export function useRelayaChat(
     // Don't attempt to connect while auth is still being determined.
     if (!stationSlug || auth.status === 'loading') return;
 
+    let disposed = false;
+    let authRetryTimer: ReturnType<typeof setTimeout> | null = null;
+
     // Build a fresh ChatConnection and store it in connRef.
-    // Returns the new instance so callers can also reference it directly.
-    const createConnection = () => {
+    // When authenticated, calls ensureFreshToken first so the WS upgrade
+    // never uses a stale AT (which would cause an HTTP 401 on the upgrade
+    // and put the client into a reconnect loop until the timer refreshes).
+    const createConnection = async () => {
+      if (auth.status === 'authenticated' && options?.ensureFreshToken) {
+        const token = await options.ensureFreshToken();
+        if (!token) {
+          setState((prev) => ({ ...prev, connectionStatus: 'reconnecting' }));
+          if (authRetryTimer === null) {
+            authRetryTimer = setTimeout(() => {
+              authRetryTimer = null;
+              if (!disposed && !document.hidden) void createConnection();
+            }, 10_000);
+          }
+          return null;
+        }
+      }
+      if (disposed) return null;
       const conn = new ChatConnection(
         () => {
           // For authenticated: use latest token via getToken() (avoids stale closure)
@@ -286,7 +313,7 @@ export function useRelayaChat(
       return conn;
     };
 
-    createConnection();
+    void createConnection();
 
     // Page Visibility API: close the connection when the tab has been hidden
     // long enough to matter, and reconnect when the tab becomes visible again.
@@ -313,9 +340,9 @@ export function useRelayaChat(
         } else {
           // Timer already fired (tab was hidden > 30s) — need a fresh connection.
           // close() sets the `closed` flag on the old instance; createConnection()
-          // builds a new one. The catch-up logic in handleStatusChange fetches
-          // any messages missed while hidden.
-          createConnection();
+          // builds a new one (ensuring a fresh AT first). The catch-up logic in
+          // handleStatusChange fetches any messages missed while hidden.
+          void createConnection();
         }
       }
     };
@@ -323,14 +350,18 @@ export function useRelayaChat(
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      disposed = true;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (visibilityTimer !== null) {
         clearTimeout(visibilityTimer);
       }
+      if (authRetryTimer !== null) {
+        clearTimeout(authRetryTimer);
+      }
       connRef.current?.close();
       connRef.current = null;
     };
-  }, [stationSlug, auth.status, getToken, options?.wsBaseUrl]);
+  }, [stationSlug, auth.status, getToken, options?.ensureFreshToken, options?.onForcedLogout, options?.wsBaseUrl]);
 
   // ── Load older messages ────────────────────────────────────
   const loadOlderMessages = useCallback(async () => {
