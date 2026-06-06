@@ -50,6 +50,8 @@
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json",
     "dev": "vite build --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint src --ext .ts,.tsx"
   },
   "peerDependencies": {
@@ -64,6 +66,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^6.0.1",
-    "vite": "^8.0.8"
+    "vite": "^8.0.8",
+    "vitest": "^4.1.2"
   }
 }

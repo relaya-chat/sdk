@@ -53,16 +53,21 @@ export function isAuthRefreshError(err: unknown): boolean {
     ((err as { status: number }).status === 401 || (err as { status: number }).status === 403);
 }
 
-// Same-JS-realm refresh dedupe. Browser tabs have separate JS heaps, so this
-// prevents duplicate refresh calls within one tab only; cross-tab coordination is
-// a separate concern.
-let refreshPromise: Promise<AuthRefreshResponse> | null = null;
+// Same-JS-realm refresh dedupe, keyed by refresh token value. Browser tabs have
+// separate JS heaps, so this prevents duplicate refresh calls within one tab only.
+// Keying by RT (rather than a single global promise) is a forward safety measure:
+// if two callers ever hold different RTs simultaneously — e.g. ensureFreshToken
+// racing with a timer tick after a rotation — each gets its own inflight promise
+// rather than sharing one that was started with the wrong token.
+const refreshPromises = new Map<string, Promise<AuthRefreshResponse>>();
 
 function refreshOnce(api: RefreshClient, refreshToken: string): Promise<AuthRefreshResponse> {
-  if (!refreshPromise) {
-    refreshPromise = api.refresh(refreshToken).finally(() => { refreshPromise = null; });
+  let p = refreshPromises.get(refreshToken);
+  if (!p) {
+    p = api.refresh(refreshToken).finally(() => { refreshPromises.delete(refreshToken); });
+    refreshPromises.set(refreshToken, p);
   }
-  return refreshPromise;
+  return p;
 }
 
 /**

@@ -3,13 +3,19 @@
 /**
  * useRelayaAuth — AT/RT token-based authentication for iframe/SDK contexts.
  *
- * Wave 6 auth overhaul:
- * - Access token (AT): short-lived JWT (15 min), held in memory only (tokenRef)
+ * auth-analysis-2026-06-05.md Wave 6 auth overhaul:
+ * - Access token (AT): short-lived JWT (30 min), held in memory only (tokenRef)
  * - Refresh token (RT): stored in localStorage, persists across browser close/reopen
  * - Login: opens a popup window (/auth/popup) for OTP; tokens arrive via postMessage
  * - Session restore: on mount, checks localStorage for RT → calls POST /auth/refresh
  * - Auto-refresh: 2 min before AT expiry, silently calls POST /auth/refresh in background
  * - Logout: deletes RT from server, clears local state
+ *
+ * auth-analysis-2026-06-05.md Thread C cross-tab coordination:
+ * - One tab is elected "refresh leader" via a short-lived localStorage lease
+ * - The leader performs the scheduled refresh; follower tabs suppress their requests
+ * - After a successful refresh the leader broadcasts the new AT+RT via BroadcastChannel
+ * - Follower tabs receive the broadcast, update their in-memory tokens, and reschedule
  *
  * No cookies are used. No Storage Access API calls needed.
  */
@@ -30,6 +36,12 @@ import {
   verifyOneTimeToken,
 } from './authRefresh.js';
 import type { RefreshResult } from './authRefresh.js';
+import {
+  createTabCoordinator,
+  getActiveOtherLease,
+  tryClaimRefreshLease,
+} from './authTabCoordinator.js';
+import type { TabCoordinator } from './authTabCoordinator.js';
 import { loadAuthenticatedState } from './authState.js';
 import type { AuthActions, AuthState, UseRelayaAuthOptions } from './authTypes.js';
 export type {
@@ -86,11 +98,37 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
   // Guard against React 18 StrictMode double-invocation
   const initStartedRef = useRef(false);
 
+  // Cross-tab coordinator — null in host-managed mode (only active when manageOwnRT=true)
+  const coordinatorRef = useRef<TabCoordinator | null>(null);
+
+  // Latest onTokenRotated implementation — updated every render to capture current
+  // state.status, storeTokenPair, and scheduleAtRefresh without stale closures.
+  const onTokenRotatedRef = useRef<((at: string, rt: string) => void) | null>(null);
+
+  // Retry handle for tabs that skip refresh because another tab currently holds
+  // the leader lease. Cleared whenever a token-rotated broadcast or local success
+  // gives this tab a fresh token pair.
+  const coordinationRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // True while mount-restore is attempting to convert a stored RT into an AT.
+  // During this narrow loading window, token-rotated broadcasts should be applied
+  // so simultaneous reloads do not all refresh with the same stored RT.
+  const restoreFromStorageInProgressRef = useRef(false);
+
+  const clearCoordinationRetryTimer = useCallback(() => {
+    if (coordinationRetryTimerRef.current !== null) {
+      clearTimeout(coordinationRetryTimerRef.current);
+      coordinationRetryTimerRef.current = null;
+    }
+  }, []);
+
   // ── Anonymous fallback ────────────────────────────────────────────────────
   // Drops local auth state to anonymous. Storage clearing is handled separately
   // so refresh-failure paths can avoid deleting a newer RT written by another tab.
 
   const setAnonymousState = useCallback(() => {
+    clearCoordinationRetryTimer();
+    restoreFromStorageInProgressRef.current = false;
     tokenRef.current = null;
     currentRtRef.current = null;
     if (refreshTimerRef.current !== null) {
@@ -105,7 +143,7 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
       station: null,
       stationSlug: configuredSpaceSlug,
     }));
-  }, [configuredSpaceSlug]);
+  }, [clearCoordinationRetryTimer, configuredSpaceSlug]);
 
   const goAnonymous = useCallback(() => {
     if (manageOwnRT) clearStoredRefreshToken();
@@ -113,11 +151,13 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
   }, [manageOwnRT, setAnonymousState]);
 
   const storeTokenPair = useCallback((accessToken: string, refreshToken: string) => {
+    clearCoordinationRetryTimer();
+    restoreFromStorageInProgressRef.current = false;
     tokenRef.current = accessToken;
     currentRtRef.current = refreshToken;
     if (manageOwnRT) tryStoreRefreshToken(refreshToken);
     setState(s => s.status === 'authenticated' ? { ...s, token: accessToken } : s);
-  }, [manageOwnRT]);
+  }, [clearCoordinationRetryTimer, manageOwnRT]);
 
   const refreshTokenPair = useCallback((refreshToken: string) => (
     refreshWithRaceRecovery(api, refreshToken, {
@@ -148,6 +188,103 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
   }, [manageOwnRT, setAnonymousState, syncLatestStoredRefreshToken]);
 
 
+  // ── Cross-tab leader coordination primitives ──────────────────────────────
+  // Single definition of "should this tab run the refresh" and "tell other tabs
+  // about a new pair". Every coordinated refresh entry point (scheduled timer,
+  // mount restore, ensureFreshToken) routes its lease/broadcast policy through
+  // these two helpers, so the rules live in exactly one place rather than being
+  // re-implemented inline at each call site.
+
+  // Returns 'lead' when this tab should perform the refresh, or 'skip' when
+  // another tab holds an active leader lease (this tab should wait for its
+  // broadcast). When coordination is inactive — host-managed mode, or no
+  // BroadcastChannel to deliver the result — always returns 'lead' and the
+  // caller falls back to Thread B race-aware refresh.
+  const tryBecomeRefreshLeader = useCallback(async (): Promise<'lead' | 'skip'> => {
+    if (!manageOwnRT || !coordinatorRef.current?.canBroadcast) return 'lead';
+    if (getActiveOtherLease()) return 'skip';
+    return (await tryClaimRefreshLease()) ? 'lead' : 'skip';
+  }, [manageOwnRT]);
+
+  const broadcastTokenRotation = useCallback((accessToken: string, refreshToken: string) => {
+    if (manageOwnRT && coordinatorRef.current?.canBroadcast) {
+      coordinatorRef.current.broadcast(accessToken, refreshToken);
+    }
+  }, [manageOwnRT]);
+
+
+  // ── Shared refresh-with-retry helper ──────────────────────────────────────
+  // Consolidates the timer and mount-restore retry ladders into one place:
+  // attempt a refresh and, on transient/race-lost, wait 10s and retry once.
+  // Cross-tab leader claiming happens before this helper is called; successful
+  // refreshes broadcast the new pair to follower tabs.
+  //
+  // onSuccess receives the new AT+RT. The caller decides what to do with them:
+  //   - timer path: storeTokenPair + scheduleAtRefresh (no state reload)
+  //   - mount path: applyTokenPair (full auth state reload including /me + /station)
+
+  const runRefreshWithRetry = useCallback((
+    initialRt: string,
+    onSuccess: (at: string, rt: string) => void | Promise<void>
+  ): void => {
+    const handleAttempt = (result: RefreshResult, isRetry: boolean): void => {
+      if (result.ok) {
+        broadcastTokenRotation(result.accessToken, result.refreshToken);
+        void onSuccess(result.accessToken, result.refreshToken);
+        return;
+      }
+
+      if (!isRetry && (result.reason === 'transient' || result.reason === 'race-lost')) {
+        window.setTimeout(() => {
+          syncLatestStoredRefreshToken();
+          const retryRt = currentRtRef.current;
+          if (!retryRt) { setAnonymousState(); return; }
+          refreshTokenPair(retryRt).then(r => handleAttempt(r, true));
+        }, 10_000);
+        return;
+      }
+
+      handleRefreshFailure(result);
+    };
+
+    refreshTokenPair(initialRt).then(r => handleAttempt(r, false));
+  }, [broadcastTokenRotation, handleRefreshFailure, refreshTokenPair, setAnonymousState, syncLatestStoredRefreshToken]);
+
+  const scheduleLeaseRetry = useCallback((start: () => void, retryAfterMs: number) => {
+    clearCoordinationRetryTimer();
+    const jitterMs = 75 + Math.floor(Math.random() * 250);
+    coordinationRetryTimerRef.current = setTimeout(() => {
+      coordinationRetryTimerRef.current = null;
+      start();
+    }, retryAfterMs + jitterMs);
+  }, [clearCoordinationRetryTimer]);
+
+  const runRefreshAsLeader = useCallback((
+    initialRt: string,
+    onSuccess: (at: string, rt: string) => void | Promise<void>,
+    options: { onMissingRt?: () => void } = {}
+  ): void => {
+    const start = async (): Promise<void> => {
+      const rt = currentRtRef.current ?? initialRt;
+      if (!rt) { options.onMissingRt?.(); return; }
+
+      if (await tryBecomeRefreshLeader() === 'skip') {
+        // Another tab is leading this refresh. If a broadcast already advanced
+        // our RT while we were contending, the stale refresh is no longer
+        // needed. Otherwise retry after the visible leader lease expires so
+        // leader crash / missed-broadcast cases still recover.
+        if (currentRtRef.current && currentRtRef.current !== rt) return;
+        scheduleLeaseRetry(start, getActiveOtherLease()?.retryAfterMs ?? 0);
+        return;
+      }
+
+      runRefreshWithRetry(rt, onSuccess);
+    };
+
+    void start();
+  }, [runRefreshWithRetry, scheduleLeaseRetry, tryBecomeRefreshLeader]);
+
+
   // ── Silent AT auto-refresh ────────────────────────────────────────────────
   // Scheduled after each successful applyTokenPair; reads currentRtRef at fire time.
 
@@ -164,46 +301,23 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
     const msUntilRefresh = Math.max(0, (exp * 1000) - Date.now() - 2 * 60 * 1000);
 
     refreshTimerRef.current = setTimeout(() => {
-      // Read the latest RT from ref (not closure) — safe even if the pair rotated.
       const rt = currentRtRef.current;
       if (!rt) return;
 
-      const handleResult = (result: RefreshResult) => {
-        if (result.ok) {
-          storeTokenPair(result.accessToken, result.refreshToken);
-          scheduleAtRefresh(result.accessToken);
-          return;
-        }
-
-        if (result.reason === 'transient' || result.reason === 'race-lost') {
-          window.setTimeout(() => {
-            syncLatestStoredRefreshToken();
-            const retryRt = currentRtRef.current;
-            if (!retryRt) return;
-            refreshTokenPair(retryRt).then(retryResult => {
-              if (retryResult.ok) {
-                storeTokenPair(retryResult.accessToken, retryResult.refreshToken);
-                scheduleAtRefresh(retryResult.accessToken);
-              } else {
-                handleRefreshFailure(retryResult);
-              }
-            });
-          }, 10_000);
-          return;
-        }
-
-        handleRefreshFailure(result);
-      };
-
-      refreshTokenPair(rt).then(handleResult);
+      runRefreshAsLeader(rt, (at, rtNew) => {
+        storeTokenPair(at, rtNew);
+        scheduleAtRefresh(at);
+      });
     }, msUntilRefresh);
-  }, [handleRefreshFailure, refreshTokenPair, storeTokenPair, syncLatestStoredRefreshToken]);
+  }, [runRefreshAsLeader, storeTokenPair]);
 
 
   // ── Apply token pair ──────────────────────────────────────────────────────
   // Called after popup postMessage or inline OTP verify.
 
   const applyTokenPair = useCallback(async (accessToken: string, refreshToken: string) => {
+    clearCoordinationRetryTimer();
+    restoreFromStorageInProgressRef.current = false;
     tokenRef.current = accessToken;
     currentRtRef.current = refreshToken;
     if (manageOwnRT) tryStoreRefreshToken(refreshToken);
@@ -216,13 +330,34 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
       if (process.env.NODE_ENV !== 'production') console.warn('[RelayaAuth] Falling back to anonymous after token apply failure', { spaceSlug: configuredSpaceSlug, err });
       goAnonymous();
     }
-  }, [api, configuredSpaceSlug, scheduleAtRefresh, goAnonymous, manageOwnRT]);
+  }, [api, clearCoordinationRetryTimer, configuredSpaceSlug, scheduleAtRefresh, goAnonymous, manageOwnRT]);
 
 
   // Backward-compat: called when OTP is verified inline (non-popup path)
   const applyVerifyResponse = useCallback((data: AuthVerifyResponse) => {
     void applyTokenPair(data.accessToken, data.refreshToken);
   }, [applyTokenPair]);
+
+
+  // ── Keep broadcast receiver ref current ───────────────────────────────────
+  // Runs after every render so the coordinator's onTokenRotated callback always
+  // closes over the latest state.status, storeTokenPair, and scheduleAtRefresh.
+  // Broadcasts are applied to authenticated tabs and to loading tabs that are
+  // actively restoring from a stored RT, preventing simultaneous reloads from
+  // all spending the same RT.
+
+  useEffect(() => {
+    onTokenRotatedRef.current = (at: string, rt: string) => {
+      if (state.status === 'loading' && restoreFromStorageInProgressRef.current) {
+        void applyTokenPair(at, rt);
+        return;
+      }
+      if (state.status !== 'authenticated') return;
+      storeTokenPair(at, rt);
+      scheduleAtRefresh(at);
+    };
+  });
+
 
   // ── Mount: session restore ────────────────────────────────────────────────
   // Priority order (when widget owns its RT):
@@ -239,6 +374,14 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
   useEffect(() => {
     if (initStartedRef.current) return;
     initStartedRef.current = true;
+
+    // Cross-tab coordinator: created in standalone-widget mode so the leader can
+    // broadcast new AT+RT pairs to followers and followers can receive them.
+    if (manageOwnRT) {
+      coordinatorRef.current = createTabCoordinator((at, rt) => {
+        onTokenRotatedRef.current?.(at, rt);
+      });
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     const urlToken = urlParams.get('token');
@@ -261,33 +404,15 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
     } else if (manageOwnRT) {
       const storedRt = restoreRefreshToken();
       if (storedRt) {
-        refreshTokenPair(storedRt).then(result => {
-          if (result.ok) {
-            void applyTokenPair(result.accessToken, result.refreshToken);
-            return;
-          }
-
-          if (result.reason === 'transient' || result.reason === 'race-lost') {
-            window.setTimeout(() => {
-              const retryRt = restoreRefreshToken();
-              if (!retryRt) {
-                setAnonymousState();
-                return;
-              }
-              refreshTokenPair(retryRt).then(retryResult => {
-                if (retryResult.ok) {
-                  void applyTokenPair(retryResult.accessToken, retryResult.refreshToken);
-                } else {
-                  handleRefreshFailure(retryResult);
-                }
-              });
-            }, 10_000);
-            return;
-          }
-
-          handleRefreshFailure(result);
-        });
+        currentRtRef.current = storedRt;
+        restoreFromStorageInProgressRef.current = true;
+        runRefreshAsLeader(
+          storedRt,
+          (at, rt) => applyTokenPair(at, rt),
+          { onMissingRt: () => { setAnonymousState(); } }
+        );
       } else {
+        restoreFromStorageInProgressRef.current = false;
         setState(s => ({ ...s, status: 'anonymous', stationSlug: configuredSpaceSlug }));
       }
     } else {
@@ -297,6 +422,8 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
     }
 
     return () => {
+      coordinatorRef.current?.dispose();
+      clearCoordinationRetryTimer();
       if (refreshTimerRef.current !== null) {
         clearTimeout(refreshTimerRef.current);
       }
@@ -326,8 +453,13 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
     const rt = currentRtRef.current;
     if (!rt) return null;
 
+    // If another tab is already leading a refresh, don't open a competing one;
+    // return null so the chat layer waits and a broadcast can update us first.
+    if (await tryBecomeRefreshLeader() === 'skip') return null;
+
     const result = await refreshTokenPair(rt);
     if (result.ok) {
+      broadcastTokenRotation(result.accessToken, result.refreshToken);
       storeTokenPair(result.accessToken, result.refreshToken);
       scheduleAtRefresh(result.accessToken);
       return result.accessToken;
@@ -339,7 +471,7 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
       syncLatestStoredRefreshToken();
     }
     return null;
-  }, [handleRefreshFailure, refreshTokenPair, scheduleAtRefresh, storeTokenPair, syncLatestStoredRefreshToken]);
+  }, [broadcastTokenRotation, handleRefreshFailure, refreshTokenPair, scheduleAtRefresh, storeTokenPair, syncLatestStoredRefreshToken, tryBecomeRefreshLeader]);
 
 
   // ── Login: open popup ─────────────────────────────────────────────────────
