@@ -8,6 +8,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.3.0] — 2026-06-06
+
+### Fixed
+
+- **`@relaya-chat/react`** — Multi-tab token refresh coordination. A localStorage lease elects a single "refresh leader" tab; a `BroadcastChannel` propagates the rotated tokens to all other tabs. Eliminates simultaneous `/auth/refresh` calls from competing tabs sharing the same token — previously one tab would invalidate the other's session. Falls back to race-aware refresh where `BroadcastChannel` is unavailable.
+
+- **`@relaya-chat/react`** — Race-aware token refresh. `clearStoredRefreshTokenIfCurrent()` prevents a losing tab from overwriting a winning tab's freshly rotated refresh token. A 401 response now re-reads localStorage before giving up — if another tab already rotated the token in, the SDK retries with the new value rather than ending the session. Authenticated WebSocket connections now call `ensureFreshToken()` before the upgrade, preventing a stuck reconnect loop caused by sending an expired access token on the initial WS handshake.
+
+- **`@relaya-chat/react`** — Reliable scroll-to-bottom (revised). Removed `scroll-behavior: smooth` from the message list container and the `isProgrammaticScrollRef` / 500 ms suppression workaround. The initial jump to the bottom is now instant; smooth scrolling is preserved for new messages arriving while the view is already at the bottom. Resolves the ↓ button vanishing in active chats.
+
+---
+
 ## [1.2.0] — 2026-06-04
 
 ### Added
