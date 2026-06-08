@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Minimal Expo example demonstrating @relaya-chat/react-native integration",
-  "main": "expo-router/entry",
+  "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",

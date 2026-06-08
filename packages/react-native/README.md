@@ -231,11 +231,13 @@ import { getMessageMenuItems } from '@relaya-chat/react-native';
 
 const menuItems = getMessageMenuItems({
   message,
-  currentUserId: auth.user?.id,
-  permissions: auth.user?.permissions ?? [],
+  currentUserId: auth.user?.id ?? null,
+  currentUserPermissions: auth.user?.permissions ?? [],
+  currentUserPriority: 0,      // derive from role data in production
+  messageAuthorPriority: 0,    // derive from role data in production
 });
 
-// menuItems.canEdit, menuItems.canDelete, menuItems.canBan, menuItems.canReport
+// menuItems.showEdit, menuItems.showDelete, menuItems.showReport, menuItems.showBan
 ```
 
 ---

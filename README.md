@@ -36,15 +36,33 @@ export default function App() {
 
 ```sh
 npm install @relaya-chat/react-native @relaya-chat/core
+npx expo install expo-secure-store
 ```
 
 ```tsx
-import { useRelayaChat } from '@relaya-chat/react-native';
+import { useRelayaAuth, useRelayaChat } from '@relaya-chat/react-native';
+import * as SecureStore from 'expo-secure-store';
+
+const tokenStorage = {
+  get: (key: string) => SecureStore.getItemAsync(key),
+  set: (key: string, value: string) => SecureStore.setItemAsync(key, value),
+  delete: (key: string) => SecureStore.deleteItemAsync(key),
+};
 
 export default function ChatScreen() {
-  const { messages, sendMessage, connectionStatus } = useRelayaChat({
-    spaceSlug: 'my-space',
+  const auth = useRelayaAuth({
     serverUrl: 'https://api.relaya.chat',
+    spaceSlug: 'my-space',
+    tokenStorage,
+  });
+
+  const { messages, sendMessage, connectionStatus } = useRelayaChat({
+    serverUrl: 'https://api.relaya.chat',
+    spaceSlug: 'my-space',
+    authState: auth,
+    getToken: auth.getToken,
+    ensureFreshToken: auth.ensureFreshToken,
+    allowAnonymous: true,
   });
   // render your own UI using messages and sendMessage
 }
