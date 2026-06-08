@@ -66,7 +66,7 @@ export interface OnlineUser {
 export interface RelayaChatOptions {
   /** Relaya SaaS endpoint — always 'https://api.relaya.chat' */
   serverUrl: string;
-  /** Your space slug — e.g. 'balearic-fm' */
+  /** Your space slug — e.g. 'your-space-slug' */
   spaceSlug: string;
   /** Auth state from useRelayaAuth */
   authState: RelayaAuthState;

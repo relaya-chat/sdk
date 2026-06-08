@@ -256,13 +256,13 @@ Proposed usage:
 ```tsx
 const auth = useRelayaAuth({
   serverUrl: 'https://api.relaya.chat',
-  spaceSlug: 'balearic-fm',
+  spaceSlug: 'your-space-slug',
   tokenStorage: relayaTokenStorage,
 });
 
 const chat = useRelayaChat({
   serverUrl: 'https://api.relaya.chat',
-  spaceSlug: 'balearic-fm',
+  spaceSlug: 'your-space-slug',
   authState: auth,
   getToken: auth.getToken,
   ensureFreshToken: auth.ensureFreshToken,
@@ -325,13 +325,13 @@ Example screen shape:
 export function ChatScreen() {
   const auth = useRelayaAuth({
     serverUrl: 'https://api.relaya.chat',
-    spaceSlug: 'balearic-fm',
+    spaceSlug: 'your-space-slug',
     tokenStorage: relayaTokenStorage,
   });
 
   const chat = useRelayaChat({
     serverUrl: 'https://api.relaya.chat',
-    spaceSlug: 'balearic-fm',
+    spaceSlug: 'your-space-slug',
     authState: auth,
     getToken: auth.getToken,
     ensureFreshToken: auth.ensureFreshToken,

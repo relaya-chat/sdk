@@ -40,7 +40,7 @@ export interface ChatConnectionOptions {
  *
  * Usage:
  *   const conn = new ChatConnection(
- *     () => `ws://localhost:9000/ws?token=${token}&station=balearic-fm`,
+ *     () => `ws://localhost:9000/ws?token=${token}&station=your-space-slug`,
  *     (msg) => dispatch(msg),
  *     (status) => setConnectionStatus(status)
  *   );

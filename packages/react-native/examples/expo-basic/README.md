@@ -37,12 +37,20 @@ npm run build:react-native
 
 You'll need a Relaya space to connect to. Sign up at [relaya.chat](https://relaya.chat) to create a space and get your `spaceSlug`. A 15-day free trial is available — no credit card required.
 
-Edit `src/ChatScreen.tsx` and update the constants near the top:
+Copy the local config template and fill in your space slug:
+
+```sh
+cp src/config.local.ts.example src/config.local.ts
+```
+
+Then edit `src/config.local.ts`:
 
 ```ts
-const SERVER_URL = 'https://api.relaya.chat';
-const SPACE_SLUG = 'your-space-slug';   // ← replace this
+export const SERVER_URL = 'https://api.relaya.chat';
+export const SPACE_SLUG = 'your-space-slug'; // ← replace with your real slug
 ```
+
+`config.local.ts` is gitignored — it will never be accidentally committed.
 
 ### 4. Run on iOS simulator
 

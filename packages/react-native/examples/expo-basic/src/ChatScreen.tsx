@@ -39,15 +39,10 @@ import {
 } from '@relaya-chat/react-native';
 import type { Message } from '@relaya-chat/core';
 import { relayaTokenStorage } from './relayaTokenStorage';
+import { SERVER_URL, SPACE_SLUG } from './config.local';
 import { RelayaSignInPanel } from './components/RelayaSignInPanel';
 import { RelayaMessageList } from './components/RelayaMessageList';
 import { RelayaMessageComposer } from './components/RelayaMessageComposer';
-
-// ── Configuration ──────────────────────────────────────────────────────────────
-// Replace with your own Relaya space slug for testing.
-
-const SERVER_URL = 'https://api.relaya.chat';
-const SPACE_SLUG = 'balearic-fm';
 
 // ── ChatScreen ─────────────────────────────────────────────────────────────────
 

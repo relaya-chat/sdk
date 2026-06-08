@@ -146,7 +146,7 @@ Returns `RelayaAuthState & RelayaAuthActions`.
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `serverUrl` | `string` | — | Relaya SaaS endpoint. Always `'https://api.relaya.chat'`. |
-| `spaceSlug` | `string` | — | Your space identifier, assigned by Relaya. E.g. `'balearic-fm'`. |
+| `spaceSlug` | `string` | — | Your space identifier, assigned by Relaya. E.g. `'your-space-slug'`. |
 | `tokenStorage` | `RelayaTokenStorage` | — | Secure storage adapter (see [README-AUTH.md](README-AUTH.md)). **Required.** |
 | `refreshTokenStorageKey` | `string` | `'relaya_refresh_token'` | Key used to store the refresh token. Override only if you need per-space isolation. |
 | `onSessionEnded` | `(reason: 'logout' \| 'refresh-failed') => void` | — | Called when the session ends. Navigate the user to a sign-in screen here. |
@@ -273,14 +273,14 @@ Both `useRelayaAuth` and `useRelayaChat` previously accepted `stationSlug`. This
 
 **Before:**
 ```ts
-useRelayaAuth({ stationSlug: 'balearic-fm', ... })
-useRelayaChat({ stationSlug: 'balearic-fm', ... })
+useRelayaAuth({ stationSlug: 'your-space-slug', ... })
+useRelayaChat({ stationSlug: 'your-space-slug', ... })
 ```
 
 **After:**
 ```ts
-useRelayaAuth({ spaceSlug: 'balearic-fm', ... })
-useRelayaChat({ spaceSlug: 'balearic-fm', ... })
+useRelayaAuth({ spaceSlug: 'your-space-slug', ... })
+useRelayaChat({ spaceSlug: 'your-space-slug', ... })
 ```
 
 The value itself (your space identifier string) does not change — only the option name.

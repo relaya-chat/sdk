@@ -1,0 +1,8 @@
+node_modules/
+.expo/
+dist/
+*.tsbuildinfo
+.DS_Store
+
+# Local config — contains real space slug, never commit
+src/config.local.ts

@@ -1,0 +1,5 @@
+// Copy this file to config.local.ts and fill in your values.
+// config.local.ts is gitignored — never commit it.
+
+export const SERVER_URL = 'https://api.relaya.chat';
+export const SPACE_SLUG = 'your-space-slug'; // ← replace with your Relaya space slug

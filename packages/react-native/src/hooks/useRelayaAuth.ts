@@ -17,6 +17,11 @@
  * Recommended: expo-secure-store for Expo, react-native-keychain for bare RN.
  */
 
+// atob is available in React Native (Hermes / JSC) but not declared in
+// TypeScript's React Native lib types. Declare it here rather than adding
+// @types/node (which brings in incompatible Node.js globals) or DOM lib.
+declare function atob(data: string): string;
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState } from 'react-native';
 import type { AppStateStatus } from 'react-native';
@@ -65,7 +70,7 @@ export interface RelayaAuthState {
 export interface RelayaAuthOptions {
   /** Relaya SaaS endpoint — always 'https://api.relaya.chat' */
   serverUrl: string;
-  /** Your space slug, assigned by Relaya — e.g. 'balearic-fm' */
+  /** Your space slug, assigned by Relaya — e.g. 'your-space-slug' */
   spaceSlug: string;
   /** Secure storage adapter (Expo SecureStore, react-native-keychain, etc.) */
   tokenStorage: RelayaTokenStorage;
@@ -103,11 +108,12 @@ export function decodeJwtExpiry(token: string): number | null {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
+    // Convert base64url → standard base64, then add padding
     const payload = parts[1];
-    const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
-    const decoded = JSON.parse(
-      Buffer.from(padded, 'base64').toString('utf8')
-    ) as Record<string, unknown>;
+    const standard = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = standard + '='.repeat((4 - (standard.length % 4)) % 4);
+    // atob is available in React Native (Hermes / JSC) and all modern environments
+    const decoded = JSON.parse(atob(padded)) as Record<string, unknown>;
     if (typeof decoded.exp !== 'number') return null;
     return decoded.exp * 1000;
   } catch {
