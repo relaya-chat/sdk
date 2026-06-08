@@ -4,8 +4,15 @@
  * useRelayaChat — WebSocket + REST chat state for React Native / Expo.
  *
  * Mirrors the web useRelayaChat hook but:
- * - Accepts a getToken callback instead of using cookies
- * - Builds the WS URL from serverUrl + stationSlug props (no config.ts)
+ * - Accepts authState, getToken, and ensureFreshToken from useRelayaAuth
+ * - Awaits ensureFreshToken() before authenticated WebSocket creation
+ * - URL factory reads the token from a ref so internal ChatConnection reconnects
+ *   always supply the freshest AT (avoids stale-token reconnects)
+ * - Uses AppState (not browser visibility APIs) for background/foreground handling
+ * - Delays WebSocket disconnect on background; cancels timer on quick foreground return
+ * - Suppresses anonymous connections when allowAnonymous === false
+ * - Builds the WS URL from serverUrl + spaceSlug props (no config.ts)
+ * - Wires onAuthRevoked so server-side force_logout / 4001 resets connRef
  * - Has no NotificationMuteContext dependency (host app manages audio)
  * - Has no sticker system (mobile UI handles stickers independently)
  *
@@ -21,6 +28,8 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { AppState } from 'react-native';
+import type { AppStateStatus } from 'react-native';
 import {
   ApiClient,
   ChatConnection,
@@ -58,11 +67,20 @@ export interface RelayaChatOptions {
   /** Relaya SaaS endpoint — always 'https://api.relaya.chat' */
   serverUrl: string;
   /** Your space slug — e.g. 'balearic-fm' */
-  stationSlug: string;
+  spaceSlug: string;
   /** Auth state from useRelayaAuth */
   authState: RelayaAuthState;
-  /** Token getter from useRelayaAuth — called on every WS connect and API request */
+  /** Token getter from useRelayaAuth — called synchronously for API requests */
   getToken: RelayaAuthActions['getToken'];
+  /** Token freshness ensurer from useRelayaAuth — awaited before WS creation */
+  ensureFreshToken: RelayaAuthActions['ensureFreshToken'];
+  /**
+   * Default true: anonymous/read-only users may connect and read chat.
+   * Set to false to suppress any WebSocket connection until the user authenticates.
+   */
+  allowAnonymous?: boolean;
+  /** Milliseconds to wait after backgrounding before closing WS. Default: 3 minutes. */
+  backgroundDisconnectDelayMs?: number;
 }
 
 export interface RelayaChatState {
@@ -98,7 +116,18 @@ export interface RelayaChatActions {
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & RelayaChatActions {
-  const { serverUrl, stationSlug, authState, getToken } = options;
+  const {
+    serverUrl,
+    spaceSlug,
+    authState,
+    getToken,
+    ensureFreshToken,
+    allowAnonymous = true,
+    backgroundDisconnectDelayMs = 3 * 60 * 1000,
+  } = options;
+
+  // Internal alias: server API still uses stationSlug terminology
+  const stationSlug = spaceSlug;
 
   const [state, setState] = useState<RelayaChatState>({
     messages: [],
@@ -117,6 +146,18 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
   const oldestMessageIdRef = useRef<string | undefined>(undefined);
   const newestMessageIdRef = useRef<string | undefined>(undefined);
   const pendingClientIds = useRef<Map<string, string>>(new Map());
+
+  // Ref-backed guard for loadOlderMessages — avoids stale closure behavior
+  const loadingOlderRef = useRef(false);
+
+  // Background disconnect timer
+  const bgDisconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Holds the token that the WS URL factory will use on every (re)connect.
+  // Updated immediately before each connect attempt so that internal ChatConnection
+  // reconnects (after network drops) always supply the freshest AT rather than the
+  // stale value captured at construction time.
+  const currentTokenRef = useRef<string | undefined>(undefined);
 
   // User directory for resolving message authors
   const userDirectory = useRef<Map<string, UserInfo>>(new Map());
@@ -366,30 +407,151 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
     // Don't connect while auth is still being determined
     if (!stationSlug || authState.status === 'loading') return;
 
-    const conn = new ChatConnection(
-      () => {
-        const token =
-          authState.status === 'authenticated' ? (getToken() ?? undefined) : undefined;
-        return buildRnWsUrl(serverUrl, stationSlug, token);
-      },
-      (msg) => handleWsMessageRef.current?.(msg),
-      (status) => handleStatusChangeRef.current?.(status)
-    );
+    // authState.status === 'otp-sent' falls through: anonymous connection is
+    // appropriate while the user is mid-login (they can read but not post).
 
-    connRef.current = conn;
-    conn.connect();
+    // Suppress all connections when allowAnonymous is explicitly false and the
+    // user is not yet authenticated.
+    if (authState.status !== 'authenticated' && allowAnonymous === false) return;
+
+    let cancelled = false;
+
+    async function openConnection(): Promise<void> {
+      let token: string | undefined;
+
+      if (authState.status === 'authenticated') {
+        const freshToken = await ensureFreshToken();
+        if (cancelled) return;
+
+        if (freshToken === null) {
+          // ensureFreshToken returned null. Two possible causes:
+          // (a) Confirmed auth failure: useRelayaAuth has already cleared state and
+          //     authState.status will transition to 'anonymous', re-triggering this
+          //     effect automatically.
+          // (b) Transient network error: useRelayaAuth preserves the RT and schedules
+          //     its own 10-second retry, which will eventually call ensureFreshToken
+          //     and result in a status change that re-triggers this effect.
+          // In both cases the correct response is to show 'reconnecting' and wait.
+          setState((prev) => ({ ...prev, connectionStatus: 'reconnecting' }));
+          return;
+        }
+        token = freshToken;
+      }
+
+      if (cancelled) return;
+
+      // Store token in ref so the URL factory always reads the latest value on
+      // every internal ChatConnection reconnect attempt (network drop, etc.).
+      currentTokenRef.current = token;
+
+      const conn = new ChatConnection(
+        () => buildRnWsUrl(serverUrl, stationSlug, currentTokenRef.current),
+        (msg) => handleWsMessageRef.current?.(msg),
+        (status) => handleStatusChangeRef.current?.(status),
+        {
+          onAuthRevoked: () => {
+            // Server sent force_logout or closed with 4001. The ChatConnection has
+            // permanently stopped — null the ref so the AppState handler doesn't
+            // try to reuse it, and let the caller's onSessionEnded handle UI.
+            connRef.current = null;
+          },
+        }
+      );
+
+      connRef.current = conn;
+      conn.connect();
+    }
+
+    openConnection().catch(() => {
+      if (!cancelled) {
+        setState((prev) => ({ ...prev, connectionStatus: 'disconnected' }));
+      }
+    });
 
     return () => {
-      conn.close();
+      cancelled = true;
+      connRef.current?.close();
       connRef.current = null;
     };
-  }, [authState.status, stationSlug, serverUrl, getToken]);
+  }, [authState.status, stationSlug, serverUrl, ensureFreshToken, allowAnonymous]);
+
+  // ── AppState: background/foreground handling ───────────────────────────────
+
+  useEffect(() => {
+    // cancelled prevents a connection created by ensureFreshToken().then(...)
+    // from landing after this effect has been torn down and re-run.
+    let cancelled = false;
+
+    const subscription = AppState.addEventListener(
+      'change',
+      (nextState: AppStateStatus) => {
+        if (nextState === 'background' || nextState === 'inactive') {
+          // Schedule WebSocket close after the delay
+          if (!bgDisconnectTimerRef.current) {
+            bgDisconnectTimerRef.current = setTimeout(() => {
+              bgDisconnectTimerRef.current = null;
+              connRef.current?.close();
+              connRef.current = null;
+            }, backgroundDisconnectDelayMs);
+          }
+        } else if (nextState === 'active') {
+          if (bgDisconnectTimerRef.current) {
+            // Quick foreground return — cancel timer, keep existing connection
+            clearTimeout(bgDisconnectTimerRef.current);
+            bgDisconnectTimerRef.current = null;
+          } else if (!connRef.current) {
+            // Long background: connection was closed — reconnect with fresh token
+            if (authState.status === 'authenticated') {
+              ensureFreshToken().then((freshToken) => {
+                if (cancelled || !freshToken) return;
+                currentTokenRef.current = freshToken;
+                const conn = new ChatConnection(
+                  () => buildRnWsUrl(serverUrl, stationSlug, currentTokenRef.current),
+                  (msg) => handleWsMessageRef.current?.(msg),
+                  (status) => handleStatusChangeRef.current?.(status),
+                  {
+                    onAuthRevoked: () => {
+                      connRef.current = null;
+                    },
+                  }
+                );
+                connRef.current = conn;
+                conn.connect();
+              }).catch(() => {
+                // ensureFreshToken failure handled inside the auth hook
+              });
+            } else if (allowAnonymous !== false) {
+              if (cancelled) return;
+              currentTokenRef.current = undefined;
+              const conn = new ChatConnection(
+                () => buildRnWsUrl(serverUrl, stationSlug, currentTokenRef.current),
+                (msg) => handleWsMessageRef.current?.(msg),
+                (status) => handleStatusChangeRef.current?.(status)
+              );
+              connRef.current = conn;
+              conn.connect();
+            }
+          }
+        }
+      }
+    );
+
+    return () => {
+      cancelled = true;
+      subscription.remove();
+      if (bgDisconnectTimerRef.current) {
+        clearTimeout(bgDisconnectTimerRef.current);
+        bgDisconnectTimerRef.current = null;
+      }
+    };
+  }, [authState.status, stationSlug, serverUrl, ensureFreshToken, allowAnonymous, backgroundDisconnectDelayMs]);
 
   // ── Load older messages ────────────────────────────────────────────────────
 
   const loadOlderMessages = useCallback(async (): Promise<void> => {
-    if (!stationSlug || !oldestMessageIdRef.current || state.loadingOlder) return;
+    if (!stationSlug || !oldestMessageIdRef.current || loadingOlderRef.current) return;
 
+    loadingOlderRef.current = true;
     setState((prev) => ({ ...prev, loadingOlder: true }));
     try {
       const res = await api.getMessages(stationSlug, {
@@ -411,8 +573,10 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
       });
     } catch {
       setState((prev) => ({ ...prev, loadingOlder: false }));
+    } finally {
+      loadingOlderRef.current = false;
     }
-  }, [api, stationSlug, state.loadingOlder]);
+  }, [api, stationSlug]);
 
   // ── Send message (optimistic) ──────────────────────────────────────────────
 
