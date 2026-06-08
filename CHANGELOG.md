@@ -8,6 +8,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.4.0] — 2026-06-08
+
+### Added
+
+- **`@relaya-chat/react-native`** — `useRelayaAuth` rewritten to the AT/RT (access/refresh token) model. Handles OTP sign-in, token refresh, and sign-out using the same session lifecycle as the React package. Stores tokens in `AsyncStorage` via an injected adapter so consumers control the storage implementation.
+
+- **`@relaya-chat/react-native`** — `useRelayaChat` updated to the AT/RT model (Wave 2A). WebSocket connections now attach a fresh access token on each connect attempt, and auth failure closes the socket gracefully for a clean re-auth cycle.
+
+- **`@relaya-chat/react-native`** — Expo Basic example app (`packages/react-native/examples/expo-basic`). Demonstrates sign-in, message list, message composer, and a presence bar against a real Relaya space. Runnable with `npm run ios` from the example directory.
+
+### Fixed
+
+- **`@relaya-chat/react-native`** — Re-render loop in `useRelayaAuth` caused by an unstabilised callback reference inside a `useEffect` dependency array.
+
+- **`@relaya-chat/react-native`** — JWT decode path and `tsconfig` corrections in the Expo Basic example.
+
+- **`@relaya-chat/react-native`** — New Architecture (`newArchEnabled: true`) enabled in the Expo Basic `app.json` to suppress Expo Go warnings.
+
+### Documentation
+
+- Server minimum-version requirements added to all three package READMEs.
+- React Native package README rewritten to reflect the AT/RT auth model and `useRelayaChat` changes.
+
+---
+
 ## [1.3.0] — 2026-06-06
 
 ### Fixed
