@@ -11,6 +11,7 @@ A minimal runnable Expo app demonstrating `@relaya-chat/react-native` integratio
 - **Sign out** — posts the refresh token to the server, clears SecureStore
 - **Moderation action sheet** — long-press any message to see `getMessageMenuItems` in action (report, delete, ban, based on your permissions)
 - **AppState foreground refresh** — handled automatically inside the SDK hooks; no extra code needed in the app
+- **Presence bar** — shows authenticated user names and total online count using `chat.users` and `chat.totalCount`
 - **Dev diagnostic panel** — shown only in `__DEV__` mode; displays `auth.status`, WebSocket `connectionStatus`, message count, and last error
 
 ## Setup
@@ -55,16 +56,16 @@ export const SPACE_SLUG = 'your-space-slug'; // ← replace with your real slug
 ### 4. Run on iOS simulator
 
 ```sh
-npx expo start --ios
+npm run ios
 ```
 
-Or on a physical device:
+This uses `scripts/start-ios.js` to ensure a valid iPhone simulator is booted before handing off to Expo. It works correctly even if Xcode simulators have been deleted or recreated since the last run.
+
+Or start Metro without auto-opening a simulator (press `i` to open one manually):
 
 ```sh
-npx expo start
+npm start
 ```
-
-Then scan the QR code with the Expo Go app, or press `i` for iOS simulator.
 
 ## Type-checking
 

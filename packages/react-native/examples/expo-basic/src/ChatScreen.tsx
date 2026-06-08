@@ -11,6 +11,7 @@
  *  - Sign out
  *  - getMessageMenuItems for report/moderation action sheet on long-press
  *  - AppState foreground refresh (handled inside the hooks; no additional code needed)
+ *  - Presence bar showing connected user names and total online count
  *  - Dev-only diagnostic panel showing auth.status, chat.connectionStatus,
  *    message count, and last error
  *
@@ -171,6 +172,20 @@ export function ChatScreen() {
         </View>
       )}
 
+      {chat.connectionStatus === 'connected' && chat.totalCount > 0 && (
+        <View style={styles.presenceBar}>
+          <Text style={styles.presenceText}>
+            {(() => {
+              const nameList = chat.users.slice(0, 3).map((u) => u.displayName).join(', ');
+              const overflow = chat.users.length > 3 ? ` +${chat.users.length - 3} more` : '';
+              return nameList
+                ? `● ${nameList}${overflow}  ·  ${chat.totalCount} online`
+                : `● ${chat.totalCount} online`;
+            })()}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.messageListContainer}>
         <RelayaMessageList
           messages={chat.messages}
@@ -218,6 +233,14 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ffc107',
   },
   statusBannerText: { color: '#856404', fontSize: 13, textAlign: 'center' },
+  presenceBar: {
+    backgroundColor: '#f5f5f5',
+    paddingVertical: 4,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e8e8e8',
+  },
+  presenceText: { color: '#888', fontSize: 12 },
   messageListContainer: { flex: 1 },
   devPanel: {
     backgroundColor: '#1a1a2e',
