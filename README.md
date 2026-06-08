@@ -50,6 +50,8 @@ export default function ChatScreen() {
 }
 ```
 
+For a complete runnable example including OTP sign-in, moderation, and AppState handling, see [`packages/react-native/examples/expo-basic/`](packages/react-native/examples/expo-basic/).
+
 ## Props
 
 | Prop | Type | Required | Description |

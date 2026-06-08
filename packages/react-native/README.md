@@ -305,7 +305,7 @@ See [README-AUTH.md](README-AUTH.md) for:
 
 ## Expo example
 
-A runnable Expo example will be available at [`examples/expo-basic/`](examples/expo-basic/) once Wave 3 of the implementation is complete. It demonstrates the SecureStore adapter, full OTP sign-in flow, message list, message composer, moderation action sheet, AppState foreground refresh, and sign-out.
+A runnable Expo example is available at [`examples/expo-basic/`](examples/expo-basic/). It demonstrates the SecureStore adapter, full OTP sign-in flow, message list, message composer, moderation action sheet, AppState foreground refresh, and sign-out. See the [example README](examples/expo-basic/README.md) for setup instructions.
 
 ---
 

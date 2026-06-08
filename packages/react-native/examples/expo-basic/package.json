@@ -1,0 +1,27 @@
+{
+  "name": "relaya-expo-basic",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal Expo example demonstrating @relaya-chat/react-native integration",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@relaya-chat/core": "file:../../../../core",
+    "@relaya-chat/react-native": "file:../../",
+    "expo": "~52.0.0",
+    "expo-secure-store": "~14.0.0",
+    "expo-status-bar": "~2.0.0",
+    "react": "18.3.1",
+    "react-native": "0.76.5"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.0",
+    "@types/react-native": "~0.73.0",
+    "typescript": "^5.5.0"
+  }
+}
