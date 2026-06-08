@@ -34,12 +34,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # --if-present skips workspaces that have no test script (e.g. @relaya-chat/react)
-      - name: Run tests
-        run: npm test --workspaces --if-present
-
+      # Build first so workspace cross-package imports (e.g. react-native → core) resolve correctly.
       - name: Build all packages
         run: npm run build
+
+      # --if-present skips workspaces that have no test script
+      - name: Run tests
+        run: npm test --workspaces --if-present
 
       # Publishes all workspaces where "private" is not true.
       # Provenance attestations are published automatically by npm Trusted
