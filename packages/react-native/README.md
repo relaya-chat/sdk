@@ -39,6 +39,10 @@ npm install react-native-keychain
 
 The SDK does not bundle either storage package. Your app chooses the implementation appropriate for its environment. See [README-AUTH.md](README-AUTH.md) for adapter code.
 
+### Server
+
+Requires **Relaya server v1.2.0 or later**. The hosted SaaS (`api.relaya.chat`) always runs the current version.
+
 ---
 
 ## Quick start
