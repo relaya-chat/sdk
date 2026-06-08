@@ -93,3 +93,18 @@ expo-basic/
 - Components are intentionally plain. Their purpose is to document the integration contract clearly, not to serve as a polished UI.
 - `currentUserPriority` and `messageAuthorPriority` are passed as `0` in this example because `RelayaAuthUser` does not expose role priority in V1. Production apps should derive these values from role data.
 - For bare React Native (without Expo), replace `expo-secure-store` with `react-native-keychain`. See [README-AUTH.md](../../README-AUTH.md) for the adapter pattern.
+
+## For developers building their own app
+
+This example is wired to the SDK via local `file:` symlinks so it can be run directly inside the SDK monorepo. A few things in this example are **specific to this monorepo setup** and are **not** needed in your own app:
+
+| File / setting | This example (monorepo) | Your own app |
+|---|---|---|
+| `package.json` deps | `"file:../../"` and `"file:../../../core"` (local symlinks) | `npm install @relaya-chat/react-native @relaya-chat/core` |
+| `metro.config.js` | Required — Metro won't follow symlinks outside the project root without it | **Not needed** — npm installs are regular directories, not symlinks |
+
+When building your own app, skip both of those. Just install from npm and Metro will resolve the packages normally. The files worth copying to your own project are:
+
+- `src/relayaTokenStorage.ts` — SecureStore adapter
+- `src/ChatScreen.tsx` — shows the full `useRelayaAuth` + `useRelayaChat` integration
+- `src/components/` — example UI components (optional, reference only)

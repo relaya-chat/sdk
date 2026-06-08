@@ -196,6 +196,14 @@ export function useRelayaAuth(
   // RT in memory for sync access — canonical copy is in tokenStorage
   const refreshTokenRef = useRef<string | null>(null);
 
+  // Stable ref for onSessionEnded — prevents it from invalidating useCallback
+  // chains (ensureFreshToken → performRefresh) and causing infinite re-renders
+  // when the caller passes an inline arrow function.
+  const onSessionEndedRef = useRef(onSessionEnded);
+  useEffect(() => {
+    onSessionEndedRef.current = onSessionEnded;
+  });
+
   const getToken = useCallback((): string | null => accessTokenRef.current, []);
 
   // Shared ApiClient — uses getToken so it always sends the latest AT
@@ -266,12 +274,12 @@ export function useRelayaAuth(
     } catch (err: unknown) {
       if (isConfirmedAuthFailure(err)) {
         await clearAuthState();
-        onSessionEnded?.('refresh-failed');
+        onSessionEndedRef.current?.('refresh-failed');
         return null;
       }
       return null;
     }
-  }, [api, applyTokenRotation, clearAuthState, onSessionEnded]);
+  }, [api, applyTokenRotation, clearAuthState]);
 
   // ── ensureFreshToken ──────────────────────────────────────────────────────
 
@@ -305,7 +313,7 @@ export function useRelayaAuth(
       } catch (err: unknown) {
         if (isConfirmedAuthFailure(err)) {
           await clearAuthState();
-          onSessionEnded?.('refresh-failed');
+          onSessionEndedRef.current?.('refresh-failed');
           return;
         }
         // Transient failure: preserve RT, show anonymous, schedule one retry
@@ -432,8 +440,8 @@ export function useRelayaAuth(
     }
 
     await clearAuthState();
-    onSessionEnded?.('logout');
-  }, [serverUrl, clearAuthState, onSessionEnded]);
+    onSessionEndedRef.current?.('logout');
+  }, [serverUrl, clearAuthState]);
 
   return {
     ...state,
