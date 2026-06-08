@@ -11,6 +11,7 @@
 // ── Auth hook ─────────────────────────────────────────────────────────────────
 export { useRelayaAuth } from './hooks/useRelayaAuth';
 export type {
+  RelayaTokenStorage,
   RelayaAuthOptions,
   RelayaAuthState,
   RelayaAuthActions,
