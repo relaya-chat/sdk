@@ -111,7 +111,11 @@ Concurrent calls sharing the same RT are deduplicated — the RT is spent exactl
 
 ### AppState / foreground handling
 
-The hook listens to React Native `AppState` changes. When the app returns to `'active'` and `status === 'authenticated'`, `ensureFreshToken()` is called automatically. A user who backgrounds the app for less than ~28 minutes (AT still fresh) sees no round-trip on foreground. A longer absence triggers a silent refresh before the chat connection reopens.
+Both hooks listen to React Native `AppState` changes independently:
+
+**`useRelayaAuth`:** When the app returns to `'active'` and `status === 'authenticated'`, `ensureFreshToken()` is called. If the AT is still fresh, this is a no-op. If it has expired, it silently refreshes via the stored RT.
+
+**`useRelayaChat`:** Manages the WebSocket lifecycle around backgrounding. On `'background'` or `'inactive'`, it starts a `backgroundDisconnectDelayMs` timer (default 3 minutes). On `'active'` before the timer fires, the timer is cancelled and the existing connection is kept. On `'active'` after the timer has fired (long absence), if no connection exists, `ensureFreshToken()` is called and the connection is reopened with a fresh AT.
 
 ### Logout
 

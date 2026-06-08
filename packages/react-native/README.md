@@ -183,10 +183,10 @@ Returns `RelayaChatState & RelayaChatActions`.
 | `serverUrl` | `string` | — | Relaya SaaS endpoint. Always `'https://api.relaya.chat'`. |
 | `spaceSlug` | `string` | — | Your space identifier. Must match the slug passed to `useRelayaAuth`. |
 | `authState` | `RelayaAuthState` | — | The full state object returned by `useRelayaAuth`. |
-| `getToken` | `() => string \| null` | — | The `getToken` action from `useRelayaAuth`. |
-| `ensureFreshToken` | `() => Promise<string \| null>` | — | The `ensureFreshToken` action from `useRelayaAuth`. Called before each WebSocket open. |
-| `allowAnonymous` | `boolean` | `true` | When `true`, anonymous users connect in read-only mode. Set `false` to require sign-in. |
-| `backgroundDisconnectDelayMs` | `number` | `180000` | Time (ms) before closing the WebSocket after the app backgrounds. Short app switches within this window preserve the existing connection. |
+| `getToken` | `() => string \| null` | — | The `getToken` action from `useRelayaAuth`. Used synchronously for REST API requests. |
+| `ensureFreshToken` | `() => Promise<string \| null>` | — | The `ensureFreshToken` action from `useRelayaAuth`. Awaited before each WebSocket open; if it returns `null`, `connectionStatus` becomes `'reconnecting'` until the session recovers. |
+| `allowAnonymous` | `boolean` | `true` | When `true`, anonymous users connect in read-only mode. Set `false` to require sign-in before any connection. |
+| `backgroundDisconnectDelayMs` | `number` | `180000` | Time (ms) before closing the WebSocket after the app backgrounds. Short app switches within this window preserve the existing connection. On foreground after a long absence, `ensureFreshToken()` is called and the connection is reopened. |
 
 #### `RelayaChatState`
 
@@ -215,6 +215,10 @@ Returns `RelayaChatState & RelayaChatActions`.
 | `reportMessage` | `(messageId: string, reason: string, details?: string) => Promise<void>` | Reports a message. |
 | `getUserInfo` | `(userId: string) => UserInfo \| undefined` | Looks up a user from the in-session directory. |
 | `getAvatarForMessage` | `(userId: string, messageTime: Date) => string \| null` | Returns the avatar URL active at the time the message was sent. |
+
+#### Server-initiated session revocation
+
+If the Relaya server sends a `force_logout` message or closes the WebSocket with code 4001, `useRelayaChat` detects this via an internal `onAuthRevoked` callback and immediately clears the connection. No automatic reconnect is attempted — `useRelayaAuth`'s `onSessionEnded` callback handles the appropriate UI response (e.g. navigating to the sign-in screen).
 
 ---
 
