@@ -14,7 +14,12 @@ interface SpaceSetupAdminProps {
   initialSignInLabel: string | null;
   /** Called after a successful save or clear so the parent can update its state. */
   onSignInLabelSaved?: (newLabel: string | null) => void;
+  /** Current hide-deleted-messages setting from the server. */
+  initialHideDeletedMessages: boolean;
+  /** Called after a successful save so the parent can update its state. */
+  onHideDeletedMessagesSaved?: (hide: boolean) => void;
 }
+
 
 /**
  * Admin section for editing per-space header bar settings:
@@ -32,6 +37,8 @@ export default function SpaceSetupAdmin({
   onHeaderNameSaved,
   initialSignInLabel,
   onSignInLabelSaved,
+  initialHideDeletedMessages,
+  onHideDeletedMessagesSaved,
 }: SpaceSetupAdminProps) {
 
   // ── Header name field state ──────────────────────────────────────────────
@@ -46,9 +53,17 @@ export default function SpaceSetupAdmin({
   const [labelError, setLabelError] = useState<string | null>(null);
   const [labelSuccess, setLabelSuccess] = useState(false);
 
+  // ── Hide-deleted-messages toggle state ────────────────────────────────────
+  const [hideDeleted, setHideDeleted] = useState(initialHideDeletedMessages);
+  const [hideDeletedSaving, setHideDeletedSaving] = useState(false);
+  const [hideDeletedError, setHideDeletedError] = useState<string | null>(null);
+
   // ── Shared PATCH helper ───────────────────────────────────────────────────
 
-  const patchStation = async (body: Record<string, string | null>): Promise<Record<string, string | null>> => {
+  const patchStation = async (
+    body: Record<string, string | boolean | null>
+  ): Promise<Record<string, string | boolean | null>> => {
+
     const token = getToken();
     const res = await fetch(
       `${serverUrl}/api/chat/${encodeURIComponent(stationSlug)}/station`,
@@ -82,7 +97,8 @@ export default function SpaceSetupAdmin({
 
     try {
       const data = await patchStation({ headerName: newName });
-      const saved = data.headerName ?? null;
+      const saved = (data.headerName as string | null) ?? null;
+
       setHeaderValue(saved ?? '');
       setHeaderSuccess(true);
       onHeaderNameSaved?.(saved);
@@ -126,7 +142,8 @@ export default function SpaceSetupAdmin({
 
     try {
       const data = await patchStation({ signInLabel: newLabel });
-      const saved = data.signInLabel ?? null;
+      const saved = (data.signInLabel as string | null) ?? null;
+
       setLabelValue(saved ?? '');
       setLabelSuccess(true);
       onSignInLabelSaved?.(saved);
@@ -158,7 +175,30 @@ export default function SpaceSetupAdmin({
     }
   };
 
+  // ── Hide-deleted-messages handler ─────────────────────────────────────────
+
+  const handleHideDeletedToggle = async (next: boolean) => {
+    setHideDeletedError(null);
+    setHideDeletedSaving(true);
+    // Optimistic update; reverted on error.
+    setHideDeleted(next);
+
+    try {
+      const data = await patchStation({ hideDeletedMessages: next });
+      const saved = (data.hideDeletedMessages as boolean) ?? next;
+      setHideDeleted(saved);
+      onHideDeletedMessagesSaved?.(saved);
+    } catch (err: unknown) {
+      const apiErr = err as { message?: string };
+      setHideDeleted(!next);
+      setHideDeletedError(apiErr?.message ?? 'Failed to update setting');
+    } finally {
+      setHideDeletedSaving(false);
+    }
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
+
 
   return (
     <div className="space-setup-admin">
@@ -276,6 +316,35 @@ export default function SpaceSetupAdmin({
         </div>
       </div>
 
+      {/* Deleted message visibility */}
+      <div className="space-setup-admin__section">
+        <p className="space-setup-admin__description">
+          Choose what happens when a message is deleted. By default, a
+          "Message removed" placeholder is shown in its place. Turn this on to
+          remove deleted messages from the chat history entirely. Moderators
+          always continue to see the placeholder. Messages are never permanently
+          erased on the server.
+        </p>
+
+        <div className="space-setup-admin__field space-setup-admin__field--inline">
+          <label className="space-setup-admin__label" htmlFor="hide-deleted-toggle">
+            Hide deleted messages
+          </label>
+          <input
+            id="hide-deleted-toggle"
+            type="checkbox"
+            checked={hideDeleted}
+            disabled={hideDeletedSaving}
+            onChange={(e) => handleHideDeletedToggle(e.target.checked)}
+          />
+        </div>
+
+        {hideDeletedError && (
+          <p className="space-setup-admin__error">{hideDeletedError}</p>
+        )}
+      </div>
+
     </div>
   );
 }
+

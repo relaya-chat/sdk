@@ -55,6 +55,12 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
   const [stationSignInLabel, setStationSignInLabel] = useState<string | null>(
     ((station as unknown) as Record<string, unknown>)?.signInLabel as string | null ?? null
   );
+  // When true, deleted messages are hidden from non-moderators instead of
+  // showing a "Message removed" placeholder. Fetched fresh on mount.
+  const [stationHideDeletedMessages, setStationHideDeletedMessages] = useState<boolean>(
+    ((station as unknown) as Record<string, unknown>)?.hideDeletedMessages as boolean ?? false
+  );
+
   const [showUserListModal, setShowUserListModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ReplyingTo | null>(null);
@@ -164,7 +170,9 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
         const raw = (info as unknown) as Record<string, unknown>;
         setStationHeaderName(raw.headerName as string | null ?? null);
         setStationSignInLabel(raw.signInLabel as string | null ?? null);
+        setStationHideDeletedMessages(raw.hideDeletedMessages as boolean ?? false);
       })
+
       .catch(() => { /* non-critical */ });
   }, [stationSlug]);
 
@@ -290,7 +298,9 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
           currentUserPermissions={user?.permissions ?? []}
           stationSlug={stationSlug}
           getToken={getToken}
+          hideDeletedMessages={stationHideDeletedMessages}
           loadingInitial={chat.loadingInitial}
+
           loadingOlder={chat.loadingOlder}
           hasOlderMessages={chat.hasOlderMessages}
           retentionCutoff={chat.retentionCutoff}

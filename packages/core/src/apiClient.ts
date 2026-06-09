@@ -151,7 +151,14 @@ export interface StationInfoResponse {
   headerName: string | null;
   /** Sign-in button label override. Null = use the default 'Sign in' text. */
   signInLabel: string | null;
+  /**
+   * When true, chat clients omit deleted messages instead of showing a
+   * "Message removed" placeholder. UI-only setting; messages remain
+   * soft-deleted and preserved server-side. Defaults to false.
+   */
+  hideDeletedMessages: boolean;
 }
+
 
 // ==================== CLIENT ====================
 

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { Message, StickerListing, UserInfo } from '@relaya-chat/core';
 import type { OptimisticMessage } from '@relaya-chat/core';
+import { PERMISSIONS } from '@relaya-chat/core';
 import MessageItem from './MessageItem.js';
 import type { DisplayMessage } from './MessageItem.js';
 
@@ -14,6 +15,13 @@ interface MessageListProps {
   currentUserPermissions: string[];
   stationSlug: string;
   getToken: () => string | null;
+  /**
+   * When true, deleted messages are omitted entirely for users without
+   * moderation rights. Moderators still see them with the "Message removed"
+   * placeholder so they retain moderation context.
+   */
+  hideDeletedMessages: boolean;
+
   loadingInitial: boolean;
   loadingOlder: boolean;
   hasOlderMessages: boolean;
@@ -39,7 +47,9 @@ export default function MessageList({
   currentUserPermissions,
   stationSlug,
   getToken,
+  hideDeletedMessages,
   loadingInitial,
+
   loadingOlder,
   hasOlderMessages,
   retentionCutoff,
@@ -102,12 +112,22 @@ export default function MessageList({
     setShowScrollBtn(false);
   }
 
+  // Moderators always see deleted messages (with the "Message removed"
+  // placeholder) so they keep moderation context. Non-moderators have deleted
+  // messages omitted entirely when the space enables hideDeletedMessages.
+  const canModerate = currentUserPermissions.includes(PERMISSIONS.DELETE_ANY);
+  const visibleMessages =
+    hideDeletedMessages && !canModerate
+      ? messages.filter((msg) => !msg.is_deleted)
+      : messages;
+
   // Build display items: interleave server messages and optimistic ones in time order.
   // Optimistic messages always appear after confirmed messages.
   const displayItems: DisplayMessage[] = [
-    ...messages.map((msg): DisplayMessage => ({ kind: 'server', msg })),
+    ...visibleMessages.map((msg): DisplayMessage => ({ kind: 'server', msg })),
     ...optimistic.map((msg): DisplayMessage => ({ kind: 'optimistic', msg })),
   ];
+
 
   // Show the retention boundary notice when:
   // - retentionCutoff is known, AND

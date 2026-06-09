@@ -97,6 +97,10 @@ export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manage
   const [signInLabel, setSignInLabel] = useState<string | null>(
     ((station as unknown) as Record<string, unknown>)?.signInLabel as string | null ?? null
   );
+  const [hideDeletedMessages, setHideDeletedMessages] = useState<boolean>(
+    ((station as unknown) as Record<string, unknown>)?.hideDeletedMessages as boolean ?? false
+  );
+
   const [themeOpen, setThemeOpen] = useState(false);
   const [moderatorsOpen, setModeratorsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
@@ -207,7 +211,10 @@ export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manage
                       onHeaderNameSaved={(newName) => setHeaderName(newName)}
                       initialSignInLabel={signInLabel}
                       onSignInLabelSaved={(newLabel) => setSignInLabel(newLabel)}
+                      initialHideDeletedMessages={hideDeletedMessages}
+                      onHideDeletedMessagesSaved={(hide) => setHideDeletedMessages(hide)}
                     />
+
                   </div>
                 )}
               </div>

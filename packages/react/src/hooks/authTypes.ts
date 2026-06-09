@@ -27,7 +27,10 @@ export interface AuthStation {
   headerName?: string | null;
   /** Sign-in button label override. Null = use the default 'Sign in' text. */
   signInLabel?: string | null;
+  /** When true, chat clients hide deleted messages instead of showing a placeholder. */
+  hideDeletedMessages?: boolean;
 }
+
 
 export interface AuthState {
   status: AuthStatus;
