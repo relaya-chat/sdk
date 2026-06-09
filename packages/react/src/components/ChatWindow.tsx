@@ -51,6 +51,10 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
   const [chatName, setChatName] = useState<string | null>(user?.chatName ?? null);
   // Cosmetic header name fetched fresh on mount; falls back to station.name or slug-formatted name.
   const [stationHeaderName, setStationHeaderName] = useState<string | null>(station?.headerName ?? null);
+  // Sign-in button label fetched fresh on mount; falls back to 'Sign in'.
+  const [stationSignInLabel, setStationSignInLabel] = useState<string | null>(
+    ((station as unknown) as Record<string, unknown>)?.signInLabel as string | null ?? null
+  );
   const [showUserListModal, setShowUserListModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ReplyingTo | null>(null);
@@ -152,13 +156,14 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
   // Embed mode: set by ?embed=true URL param
   const isEmbedded = appConfig.embed;
 
-  // Fetch station on mount to get the cosmetic header name (works for both authenticated
-  // and anonymous users — this is a public endpoint).
+  // Fetch station on mount to get the cosmetic header name and sign-in label
+  // (works for both authenticated and anonymous users — this is a public endpoint).
   useEffect(() => {
     apiRef.current.getStation(stationSlug)
       .then((info) => {
-        const hn = ((info as unknown) as Record<string, unknown>).headerName as string | null ?? null;
-        setStationHeaderName(hn);
+        const raw = (info as unknown) as Record<string, unknown>;
+        setStationHeaderName(raw.headerName as string | null ?? null);
+        setStationSignInLabel(raw.signInLabel as string | null ?? null);
       })
       .catch(() => { /* non-critical */ });
   }, [stationSlug]);
@@ -241,9 +246,9 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
           <button
             className="btn btn--primary chat-header__signin"
             onClick={() => setShowAuthModal(true)}
-            title="Sign in"
+            title={stationSignInLabel ?? 'Sign in'}
           >
-            Sign in
+            {stationSignInLabel ?? 'Sign in'}
           </button>
         ) : !hideSignOut ? (
           <button

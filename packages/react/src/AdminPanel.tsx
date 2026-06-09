@@ -27,7 +27,7 @@ import ThemeAdminPage from './components/ThemeAdminPage.js';
 import ExportAdminPage from './components/ExportAdminPage.js';
 import GeoRestrictionsAdmin from './components/GeoRestrictionsAdmin.js';
 import ModeratorAdminPage from './components/ModeratorAdminPage.js';
-import SpaceHeaderNameAdmin from './components/SpaceHeaderNameAdmin.js';
+import SpaceSetupAdmin from './components/SpaceSetupAdmin.js';
 
 export interface AdminPanelProps {
   /** Additional CSS class applied alongside relaya-root on the wrapper element. */
@@ -92,8 +92,11 @@ export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manage
 
   // Toggle state for collapsible admin-only sections
   const [stickerOpen, setStickerOpen] = useState(false);
-  const [headerNameOpen, setHeaderNameOpen] = useState(false);
+  const [spaceSetupOpen, setSpaceSetupOpen] = useState(false);
   const [headerName, setHeaderName] = useState<string | null>(station?.headerName ?? null);
+  const [signInLabel, setSignInLabel] = useState<string | null>(
+    ((station as unknown) as Record<string, unknown>)?.signInLabel as string | null ?? null
+  );
   const [themeOpen, setThemeOpen] = useState(false);
   const [moderatorsOpen, setModeratorsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
@@ -186,22 +189,24 @@ export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manage
             </section>
           )}
 
-          {/* Space display name — admins only */}
+          {/* Space setup — admins only */}
           {isAdmin && (
             <section className="admin-panel__section">
               <div className="admin-settings">
-                <button className="admin-settings__toggle" onClick={() => setHeaderNameOpen((o) => !o)}>
-                  <span>{headerNameOpen ? '▼' : '▶'}</span>
-                  <span>Space display name</span>
+                <button className="admin-settings__toggle" onClick={() => setSpaceSetupOpen((o) => !o)}>
+                  <span>{spaceSetupOpen ? '▼' : '▶'}</span>
+                  <span>Space setup</span>
                 </button>
-                {headerNameOpen && (
+                {spaceSetupOpen && (
                   <div className="admin-settings__panel">
-                    <SpaceHeaderNameAdmin
+                    <SpaceSetupAdmin
                       stationSlug={stationSlug}
                       serverUrl={serverUrl}
                       getToken={getToken}
                       initialHeaderName={headerName}
-                      onSaved={(newName) => setHeaderName(newName)}
+                      onHeaderNameSaved={(newName) => setHeaderName(newName)}
+                      initialSignInLabel={signInLabel}
+                      onSignInLabelSaved={(newLabel) => setSignInLabel(newLabel)}
                     />
                   </div>
                 )}

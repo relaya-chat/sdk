@@ -40,6 +40,7 @@ export async function loadAuthenticatedState(
       name: stationData.name,
       slug: stationData.slug,
       headerName: ((stationData as unknown) as Record<string, unknown>).headerName as string | null ?? null,
+      signInLabel: ((stationData as unknown) as Record<string, unknown>).signInLabel as string | null ?? null,
     },
     stationSlug: stationData.slug,
     error: null,

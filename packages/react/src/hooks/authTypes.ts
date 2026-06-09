@@ -25,6 +25,8 @@ export interface AuthStation {
   slug: string;
   /** Cosmetic header display name. Null = use the official name. */
   headerName?: string | null;
+  /** Sign-in button label override. Null = use the default 'Sign in' text. */
+  signInLabel?: string | null;
 }
 
 export interface AuthState {
