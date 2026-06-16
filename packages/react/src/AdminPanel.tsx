@@ -28,6 +28,7 @@ import ExportAdminPage from './components/ExportAdminPage.js';
 import GeoRestrictionsAdmin from './components/GeoRestrictionsAdmin.js';
 import ModeratorAdminPage from './components/ModeratorAdminPage.js';
 import SpaceSetupAdmin from './components/SpaceSetupAdmin.js';
+import EmbedSecurityAdmin from './components/EmbedSecurityAdmin.js';
 
 export interface AdminPanelProps {
   /** Additional CSS class applied alongside relaya-root on the wrapper element. */
@@ -105,6 +106,7 @@ export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manage
   const [moderatorsOpen, setModeratorsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [geoOpen, setGeoOpen] = useState(false);
+  const [embedSecurityOpen, setEmbedSecurityOpen] = useState(false);
 
   const rootClass = className ? `relaya-root ${className}` : 'relaya-root';
 
@@ -310,6 +312,26 @@ export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manage
                 {geoOpen && (
                   <div className="admin-settings__panel">
                     <GeoRestrictionsAdmin
+                      stationSlug={stationSlug}
+                      getToken={getToken}
+                    />
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Embed security (allowed origins + API key) — admins only */}
+          {isAdmin && (
+            <section className="admin-panel__section">
+              <div className="admin-settings">
+                <button className="admin-settings__toggle" onClick={() => setEmbedSecurityOpen((o) => !o)}>
+                  <span>{embedSecurityOpen ? '▼' : '▶'}</span>
+                  <span>Embed security</span>
+                </button>
+                {embedSecurityOpen && (
+                  <div className="admin-settings__panel">
+                    <EmbedSecurityAdmin
                       stationSlug={stationSlug}
                       getToken={getToken}
                     />

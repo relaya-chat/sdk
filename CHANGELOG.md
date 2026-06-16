@@ -10,7 +10,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`@relaya-chat/react`** — `EmbedSecurityAdmin`, surfaced as an "Embed security" section in `<AdminPanel>` (admin-only). The **iFrame** tab lets space admins view, add, and remove the domains authorized to embed a space; the **Native SDK** tab shows API key status and supports generating, rotating, and revoking an API key, with a one-time full-key reveal after generate/rotate.
+
 ### Fixed
+
 
 - **`@relaya-chat/react`** — Cross-tab refresh lease is now released when the auth hook unmounts, so a quick page reload reconnects immediately instead of waiting out the lease TTL. Previously a reload could leave chat sitting on "Loading…" for up to ~30 seconds. The tab coordinator is also dispose-safe: broadcasts to a closed `BroadcastChannel` are ignored rather than throwing, which could otherwise drop the session on remount (including React StrictMode double-mounting in development).
 

@@ -33,6 +33,7 @@
 @import './components/admin-bans.css';
 @import './components/admin-theme.css';
 @import './components/admin-geo.css';
+@import './components/admin-embed-security.css';
 @import './components/admin-export.css';
 @import './components/moderator-admin.css';
 
