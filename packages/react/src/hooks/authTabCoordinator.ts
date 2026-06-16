@@ -147,7 +147,30 @@ export async function tryClaimRefreshLease(): Promise<boolean> {
   );
 }
 
+/**
+ * Release the leader lease if (and only if) this tab currently owns it.
+ *
+ * The lease exists only to prevent concurrent tabs from refreshing the same RT
+ * during the brief refresh window. Once a refresh succeeds the lease has served
+ * its purpose, so the leader drops it immediately instead of letting it sit
+ * until the TTL expires. Without this, a tab that reloads within LEASE_DURATION_MS
+ * reads the lease its own predecessor left behind, sees a different (new) TAB_ID,
+ * mistakes itself for a follower, and stalls a full lease duration before
+ * refreshing. Ownership-checked so we never delete a lease a different tab holds.
+ */
+export function releaseRefreshLease(): void {
+  try {
+    const lease = readLease();
+    if (lease && lease.tabId === TAB_ID) {
+      localStorage.removeItem(LEADER_LEASE_KEY);
+    }
+  } catch {
+    /* best-effort — a failed release just falls back to TTL expiry */
+  }
+}
+
 // ── BroadcastChannel ──────────────────────────────────────────────────────────
+
 
 type TokenRotatedMessage = {
   type: 'relaya:token-rotated';
@@ -197,18 +220,35 @@ export function createTabCoordinator(
     }
   };
 
+  // Track close state so a broadcast attempted after dispose() (e.g. a refresh
+  // that resolves after the hook unmounts, or a stale coordinator left behind by
+  // a React StrictMode mount→unmount→remount cycle) becomes a safe no-op instead
+  // of throwing `InvalidStateError: ... channel is closed`. That throw previously
+  // aborted the caller's token-application path and silently dropped the session.
+  let closed = false;
+
   return {
-    canBroadcast: true,
+    get canBroadcast(): boolean {
+      return !closed;
+    },
     broadcast(accessToken: string, refreshToken: string): void {
+      if (closed) return;
       const msg: TokenRotatedMessage = {
         type: 'relaya:token-rotated',
         accessToken,
         refreshToken,
       };
-      channel.postMessage(msg);
+      try {
+        channel.postMessage(msg);
+      } catch {
+        /* channel closed concurrently — broadcast is best-effort */
+      }
     },
     dispose(): void {
+      if (closed) return;
+      closed = true;
       channel.close();
     },
   };
 }
+

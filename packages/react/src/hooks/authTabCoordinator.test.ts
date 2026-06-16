@@ -19,8 +19,10 @@ import {
   createTabCoordinator,
   getActiveOtherLease,
   isLeaseHeldByOther,
+  releaseRefreshLease,
   tryClaimRefreshLease,
 } from './authTabCoordinator.js';
+
 
 const LEASE_KEY = 'relaya_refresh_leader';
 // Mirrors LEASE_SETTLE_MS in authTabCoordinator.ts (not exported from the module).
@@ -143,9 +145,34 @@ describe('tryClaimRefreshLease', () => {
   });
 });
 
+describe('releaseRefreshLease', () => {
+  it('removes the lease this tab owns so a quick reload does not wait out the TTL', async () => {
+    expect(await claimWithSettle()).toBe(true);
+    expect(localStorage.getItem(LEASE_KEY)).not.toBeNull();
+
+    releaseRefreshLease();
+
+    expect(localStorage.getItem(LEASE_KEY)).toBeNull();
+  });
+
+  it('does not delete a lease owned by another tab', () => {
+    writeForeignLease(Date.now());
+    releaseRefreshLease();
+    // Foreign lease must survive — releasing is ownership-checked.
+    expect(localStorage.getItem(LEASE_KEY)).not.toBeNull();
+    expect(isLeaseHeldByOther()).toBe(true);
+  });
+
+  it('is a no-op when no lease is stored', () => {
+    expect(() => releaseRefreshLease()).not.toThrow();
+    expect(localStorage.getItem(LEASE_KEY)).toBeNull();
+  });
+});
+
 describe('createTabCoordinator', () => {
   it('returns a no-op coordinator when BroadcastChannel is unavailable', () => {
     vi.stubGlobal('BroadcastChannel', undefined);
+
     const coordinator = createTabCoordinator(() => {});
     expect(coordinator.canBroadcast).toBe(false);
     // No-op methods must not throw so callers need no feature-detection guards.
@@ -162,4 +189,18 @@ describe('createTabCoordinator', () => {
       coordinator.dispose();
     }
   });
+
+  it('stops broadcasting and never throws after dispose (StrictMode/unmount safety)', () => {
+    if (typeof BroadcastChannel === 'undefined') return; // environment guard
+    const coordinator = createTabCoordinator(() => {});
+    coordinator.dispose();
+    // A refresh that resolves after the hook unmounts (or a stale coordinator
+    // left by a StrictMode remount) must degrade to a no-op, not throw
+    // "channel is closed" and abort the caller's token-application path.
+    expect(coordinator.canBroadcast).toBe(false);
+    expect(() => coordinator.broadcast('at', 'rt')).not.toThrow();
+    // dispose is idempotent.
+    expect(() => coordinator.dispose()).not.toThrow();
+  });
 });
+

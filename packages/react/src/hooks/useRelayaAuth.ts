@@ -39,8 +39,10 @@ import type { RefreshResult } from './authRefresh.js';
 import {
   createTabCoordinator,
   getActiveOtherLease,
+  releaseRefreshLease,
   tryClaimRefreshLease,
 } from './authTabCoordinator.js';
+
 import type { TabCoordinator } from './authTabCoordinator.js';
 import { loadAuthenticatedState } from './authState.js';
 import type { AuthActions, AuthState, UseRelayaAuthOptions } from './authTypes.js';
@@ -206,11 +208,22 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
     return (await tryClaimRefreshLease()) ? 'lead' : 'skip';
   }, [manageOwnRT]);
 
+  // After any successful refresh the leader's lease has served its purpose, so
+  // release it immediately and notify follower tabs. Releasing here (rather than
+  // waiting for the lease TTL) prevents a tab that reloads within LEASE_DURATION_MS
+  // from stalling against the lease its own predecessor left behind. The broadcast
+  // is wrapped so a delivery failure can never abort the caller's token-apply path.
   const broadcastTokenRotation = useCallback((accessToken: string, refreshToken: string) => {
+    releaseRefreshLease();
     if (manageOwnRT && coordinatorRef.current?.canBroadcast) {
-      coordinatorRef.current.broadcast(accessToken, refreshToken);
+      try {
+        coordinatorRef.current.broadcast(accessToken, refreshToken);
+      } catch {
+        /* broadcast is best-effort; token application must still proceed */
+      }
     }
   }, [manageOwnRT]);
+
 
 
   // ── Shared refresh-with-retry helper ──────────────────────────────────────
@@ -359,7 +372,28 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
   });
 
 
+  // ── Coordinator lifecycle ─────────────────────────────────────────────────
+  // Owns the cross-tab BroadcastChannel. Kept in its own effect (not gated by
+  // initStartedRef) so React StrictMode's mount → unmount → remount recreates a
+  // live channel each time, instead of leaving the session-restore code holding
+  // a coordinator that was disposed during the StrictMode unmount (a disposed
+  // coordinator whose broadcast() throws would abort token application and drop
+  // the session). Declared before the session-restore effect so coordinatorRef
+  // is populated before mount-restore consults it for leader election.
+  useEffect(() => {
+    if (!manageOwnRT) return;
+    coordinatorRef.current = createTabCoordinator((at, rt) => {
+      onTokenRotatedRef.current?.(at, rt);
+    });
+    return () => {
+      coordinatorRef.current?.dispose();
+      coordinatorRef.current = null;
+    };
+  }, [manageOwnRT]);
+
+
   // ── Mount: session restore ────────────────────────────────────────────────
+
   // Priority order (when widget owns its RT):
   //   1. ?token= in URL — auto-auth magic-link token from /account dashboard iframes
   //   2. localStorage RT — persists across browser close/reopen and across tabs
@@ -375,15 +409,8 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
     if (initStartedRef.current) return;
     initStartedRef.current = true;
 
-    // Cross-tab coordinator: created in standalone-widget mode so the leader can
-    // broadcast new AT+RT pairs to followers and followers can receive them.
-    if (manageOwnRT) {
-      coordinatorRef.current = createTabCoordinator((at, rt) => {
-        onTokenRotatedRef.current?.(at, rt);
-      });
-    }
-
     const urlParams = new URLSearchParams(window.location.search);
+
     const urlToken = urlParams.get('token');
     const tokenToVerify = configuredInitialToken ?? urlToken;
     const urlStation = urlParams.get('station') || configuredSpaceSlug;
@@ -422,13 +449,14 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
     }
 
     return () => {
-      coordinatorRef.current?.dispose();
+      // Coordinator disposal is owned by the coordinator-lifecycle effect above.
       clearCoordinationRetryTimer();
       if (refreshTimerRef.current !== null) {
         clearTimeout(refreshTimerRef.current);
       }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
 
 
   // ── Ensure fresh token ────────────────────────────────────────────────────
