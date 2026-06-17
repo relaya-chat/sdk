@@ -127,6 +127,7 @@ Once your space is set up, you can optionally generate a per-space API key in th
 - [Theming guide](https://relaya.chat/docs/theming) — CSS custom properties
 - [Admin panel](https://relaya.chat/docs/admin) — moderation features
 - [Privacy & data handling](packages/react/PRIVACY.md) — what Relaya collects, for your own privacy policy
+- [Checking the live server version](docs/server-version.md) — curl the version endpoint, cross-reference SDK compatibility
 
 ## Contributing
 
