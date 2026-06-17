@@ -26,17 +26,6 @@
 @import './components/chat.css';
 @import './components/input.css';
 @import './components/users.css';
-@import './components/admin-panel.css';
-@import './components/admin-settings.css';
-@import './components/admin-stickers.css';
-@import './components/admin-reports.css';
-@import './components/admin-bans.css';
-@import './components/admin-theme.css';
-@import './components/admin-geo.css';
-@import './components/admin-embed-security.css';
-@import './components/admin-export.css';
-@import './components/moderator-admin.css';
-
 /* ── Features ────────────────────────────────────────────── */
 @import './message-edit.css';
 @import './reply.css';

@@ -35,10 +35,6 @@
       "require": "./dist/index.cjs",
       "types": "./dist/index.d.ts"
     },
-    "./admin": {
-      "import": "./dist/admin.js",
-      "types": "./dist/admin.d.ts"
-    },
     "./styles": "./dist/relaya.css"
   },
   "files": [

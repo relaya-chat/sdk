@@ -10,11 +10,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Removed
+
+- **`@relaya-chat/react`** — **BREAKING:** The admin panel has been removed from the SDK. The `AdminPanel` component (and its `AdminPanelProps` type), the `@relaya-chat/react/admin` subpath export, and the `reorderStickersByFilename` helper are gone. Space administration now lives natively in the relaya.chat `/account` dashboard rather than inside the embedded chat client; the in-chat gear icon that opened the panel was removed in the previous release. Consumers embedding `<RelayaChat>` need no changes — chat is unaffected. Anyone importing from `@relaya-chat/react/admin` or referencing `AdminPanel` must remove those imports and administer spaces at relaya.chat. This drops ~5,000 lines of code and all admin stylesheets, so the package and its default CSS bundle are smaller; the default styles no longer carry admin UI.
+
 ### Added
 
-- **`@relaya-chat/react`** — `EmbedSecurityAdmin`, surfaced as an "Embed security" section in `<AdminPanel>` (admin-only). The **iFrame** tab lets space admins view, add, and remove the domains authorized to embed a space; the **Native SDK** tab shows API key status and supports generating, rotating, and revoking an API key, with a one-time full-key reveal after generate/rotate.
-
-- **All packages** — `apiKey` prop / option for per-space API key enforcement. Pass the key generated in the space admin panel's **Native** tab as `apiKey` to `<RelayaChat>`, `<AdminPanel>`, `useRelayaAuth`, and `useRelayaChat`. The key is sent as `X-Relaya-Api-Key` on all REST requests and appended as `?apiKey=` on the WebSocket upgrade URL. Omitting the prop is a no-op — spaces without key enforcement configured are unaffected. Requires Relaya server v1.5.0 or later for enforcement to take effect.
+- **All packages** — `apiKey` prop / option for per-space API key enforcement. Pass the key generated in the space's admin settings at relaya.chat as `apiKey` to `<RelayaChat>`, `useRelayaAuth`, and `useRelayaChat`. The key is sent as `X-Relaya-Api-Key` on all REST requests and appended as `?apiKey=` on the WebSocket upgrade URL. Omitting the prop is a no-op — spaces without key enforcement configured are unaffected. Requires Relaya server v1.5.0 or later for enforcement to take effect.
 
 ### Fixed
 

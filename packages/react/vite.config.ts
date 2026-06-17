@@ -5,9 +5,8 @@ import { resolve } from 'path';
 /**
  * Vite config for @relaya-chat/react — library mode build.
  *
- * Produces two entry points:
+ * Produces one entry point:
  *   dist/index.js / dist/index.cjs  — main chat component and headless hooks
- *   dist/admin.js                   — admin panel (loaded only in admin popup window)
  *
  * CSS is extracted to dist/relaya.css (imported via "@relaya-chat/react/styles").
  *
@@ -20,7 +19,6 @@ export default defineConfig({
     lib: {
       entry: {
         index: resolve(__dirname, 'src/index.ts'),
-        admin: resolve(__dirname, 'src/admin.ts'),
       },
       formats: ['es', 'cjs'],
       fileName: (format, entryName) =>

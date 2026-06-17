@@ -45,8 +45,6 @@ export {
 } from './stickerInputUtils.js';
 export type { ActiveShortcodeQuery } from './stickerInputUtils.js';
 
-export { reorderStickersByFilename } from './stickerAdminUtils.js';
-
 // ── Types re-exported from hooks ───────────────────────────────────────────
 export type {
   AuthStatus,
@@ -84,17 +82,11 @@ export type {
 export { RelayaChat } from './RelayaChat.js';
 export type { RelayaChatProps } from './RelayaChat.js';
 
-// ── Admin panel (embeddable in account dashboard) ──────────────────────────
-export { AdminPanel } from './AdminPanel.js';
-export type { AdminPanelProps } from './AdminPanel.js';
-
 // ── Individual components (advanced embedding use cases) ───────────────────
 export { default as ChatWindow } from './components/ChatWindow.js';
-export { default as AdminSettings } from './components/AdminSettings.js';
 export { default as AudioNotification } from './components/AudioNotification.js';
 export { default as AuthModal } from './components/AuthModal.js';
 export { default as AuthSuccess } from './components/AuthSuccess.js';
-export { default as BanManagement } from './components/BanManagement.js';
 export { default as BanModal } from './components/BanModal.js';
 export { default as ChatNameEditor } from './components/ChatNameEditor.js';
 export { default as ConnectionStatus } from './components/ConnectionStatus.js';
@@ -109,8 +101,5 @@ export { default as MessageList } from './components/MessageList.js';
 export { default as MuteToggle } from './components/MuteToggle.js';
 export { default as OTPCodeInput } from './components/OTPCodeInput.js';
 export { default as ReportModal } from './components/ReportModal.js';
-export { default as ReportReview } from './components/ReportReview.js';
-export { default as StickerAdminPage } from './components/StickerAdminPage.js';
-export { default as ThemeAdminPage } from './components/ThemeAdminPage.js';
 export { default as UserList } from './components/UserList.js';
 export { default as UserListModal } from './components/UserListModal.js';
