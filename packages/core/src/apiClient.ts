@@ -167,15 +167,21 @@ export class ApiClient {
    * @param baseUrl   - Base URL for all requests (e.g. '' for same-origin in browser,
    *                    or 'http://localhost:9000' for direct connection)
    * @param getToken  - Callback that returns the current JWT (or null if unauthenticated)
+   * @param apiKey    - Optional per-space API key. When provided, sent as
+   *                    `X-Relaya-Api-Key` on every request.
    */
   constructor(
     private readonly baseUrl: string,
-    private readonly getToken: () => string | null
+    private readonly getToken: () => string | null,
+    private readonly apiKey?: string
   ) {}
 
   private authHeaders(): Record<string, string> {
     const token = this.getToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (this.apiKey) headers['X-Relaya-Api-Key'] = this.apiKey;
+    return headers;
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {

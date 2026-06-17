@@ -66,6 +66,12 @@ export interface UseRelayaAuthOptions {
   /** One-time magic-link token supplied by SDK consumers for auto-auth handoff. */
   initialToken?: string | null;
   /**
+   * Optional per-space API key (generated in the space admin panel).
+   * When provided, sent as `X-Relaya-Api-Key` on every REST request made by
+   * this hook. Omit for spaces that have not yet configured key enforcement.
+   */
+  apiKey?: string;
+  /**
    * Whether the widget owns its own refresh-token persistence.
    *
    *  - `true` (default) — widget reads, writes, and clears

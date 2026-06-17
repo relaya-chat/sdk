@@ -58,4 +58,22 @@ describe('buildRnWsUrl', () => {
     // Ensure raw special characters are NOT present in the token portion
     expect(url).not.toContain('token=abc+');
   });
+
+  // ── apiKey handling ───────────────────────────────────────────────────────
+
+  it('omits apiKey param when apiKey is not provided', () => {
+    const url = buildRnWsUrl('https://api.relaya.chat', 'my-space');
+    expect(url).not.toContain('apiKey=');
+  });
+
+  it('appends apiKey query param when apiKey is provided without a token', () => {
+    const url = buildRnWsUrl('https://api.relaya.chat', 'my-space', undefined, 'rlk_live_abc123');
+    expect(url).toBe('wss://api.relaya.chat/ws?station=my-space&apiKey=rlk_live_abc123');
+  });
+
+  it('includes both token and apiKey when both are provided', () => {
+    const url = buildRnWsUrl('https://api.relaya.chat', 'my-space', 'mytoken123', 'rlk_live_abc123');
+    expect(url).toContain('token=mytoken123');
+    expect(url).toContain('apiKey=rlk_live_abc123');
+  });
 });

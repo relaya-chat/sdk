@@ -154,6 +154,7 @@ Returns `RelayaAuthState & RelayaAuthActions`.
 | `tokenStorage` | `RelayaTokenStorage` | — | Secure storage adapter (see [README-AUTH.md](README-AUTH.md)). **Required.** |
 | `refreshTokenStorageKey` | `string` | `'relaya_refresh_token'` | Key used to store the refresh token. Override only if you need per-space isolation. |
 | `onSessionEnded` | `(reason: 'logout' \| 'refresh-failed') => void` | — | Called when the session ends. Navigate the user to a sign-in screen here. |
+| `apiKey` | `string` | — | Per-space API key (generated in the space admin panel → **Native** tab). Required when your space has API key enforcement enabled. Sent as `X-Relaya-Api-Key` on every REST request. |
 
 #### `RelayaAuthState`
 
@@ -191,6 +192,7 @@ Returns `RelayaChatState & RelayaChatActions`.
 | `ensureFreshToken` | `() => Promise<string \| null>` | — | The `ensureFreshToken` action from `useRelayaAuth`. Awaited before each WebSocket open; if it returns `null`, `connectionStatus` becomes `'reconnecting'` until the session recovers. |
 | `allowAnonymous` | `boolean` | `true` | When `true`, anonymous users connect in read-only mode. Set `false` to require sign-in before any connection. |
 | `backgroundDisconnectDelayMs` | `number` | `180000` | Time (ms) before closing the WebSocket after the app backgrounds. Short app switches within this window preserve the existing connection. On foreground after a long absence, `ensureFreshToken()` is called and the connection is reopened. |
+| `apiKey` | `string` | — | Per-space API key. Sent as `X-Relaya-Api-Key` on REST requests and appended as `?apiKey=` on the WebSocket upgrade URL. Pass the same key provided to `useRelayaAuth`. |
 
 #### `RelayaChatState`
 

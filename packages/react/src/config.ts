@@ -114,9 +114,10 @@ export function clearTokenFromUrl(): void {
  * to the chat server on port 9000, which binds to 0.0.0.0 and is directly
  * reachable from other devices on the same network.
  */
-export function buildWsUrl(stationSlug: string, token?: string): string {
+export function buildWsUrl(stationSlug: string, token?: string, apiKey?: string): string {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const tokenParam = token ? `token=${encodeURIComponent(token)}&` : '';
+  const apiKeyParam = apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : '';
 
   // Detect "Vite dev server accessed from a LAN IP" scenario:
   // port 5173 = Vite dev, non-localhost hostname = external device on the LAN.
@@ -127,5 +128,5 @@ export function buildWsUrl(stationSlug: string, token?: string): string {
     ? `${window.location.hostname}:9000`
     : window.location.host;
 
-  return `${protocol}//${host}/ws?${tokenParam}station=${encodeURIComponent(stationSlug)}`;
+  return `${protocol}//${host}/ws?${tokenParam}station=${encodeURIComponent(stationSlug)}${apiKeyParam}`;
 }

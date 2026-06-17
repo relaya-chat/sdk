@@ -63,6 +63,7 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
   const configuredSpaceSlug = options.spaceSlug ?? appConfig.spaceSlug;
   const effectiveBaseUrl = options.serverUrl ?? '';
   const configuredInitialToken = options.initialToken ?? null;
+  const apiKey = options.apiKey;
   // Storage ownership: when manageOwnRefreshToken is false, the host application
   // owns the RT. The widget must never read, write, or clear
   // localStorage.relaya_refresh_token in that mode — that key belongs to the host.
@@ -95,7 +96,7 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Shared ApiClient instance — stable reference
-  const api = useRef(new ApiClient(effectiveBaseUrl, getToken)).current;
+  const api = useRef(new ApiClient(effectiveBaseUrl, getToken, apiKey)).current;
 
   // Guard against React 18 StrictMode double-invocation
   const initStartedRef = useRef(false);

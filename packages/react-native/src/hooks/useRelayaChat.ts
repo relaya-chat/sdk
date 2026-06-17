@@ -64,7 +64,7 @@ export interface OnlineUser {
 }
 
 export interface RelayaChatOptions {
-  /** Relaya SaaS endpoint — always 'https://api.relaya.chat' */
+/** Relaya SaaS endpoint — always 'https://api.relaya.chat' */
   serverUrl: string;
   /** Your space slug — e.g. 'your-space-slug' */
   spaceSlug: string;
@@ -81,6 +81,13 @@ export interface RelayaChatOptions {
   allowAnonymous?: boolean;
   /** Milliseconds to wait after backgrounding before closing WS. Default: 3 minutes. */
   backgroundDisconnectDelayMs?: number;
+  /**
+   * Optional per-space API key (generated in the space admin panel, Native tab).
+   * When provided:
+   * - Sent as `X-Relaya-Api-Key` on all REST requests
+   * - Appended as `?apiKey=` on the WebSocket upgrade URL
+   */
+  apiKey?: string;
 }
 
 export interface RelayaChatState {
@@ -124,6 +131,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
     ensureFreshToken,
     allowAnonymous = true,
     backgroundDisconnectDelayMs = 3 * 60 * 1000,
+    apiKey,
   } = options;
 
   // Internal alias: server API still uses stationSlug terminology
@@ -165,7 +173,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
   // Avatar history for temporal tracking (session-only)
   const avatarHistory = useRef<Map<string, AvatarChange[]>>(new Map());
 
-  const api = useRef(new ApiClient(serverUrl, getToken)).current;
+  const api = useRef(new ApiClient(serverUrl, getToken, apiKey)).current;
 
   // Stable refs for callbacks — prevents stale closures in long-lived WS handlers
   const handleWsMessageRef = useRef<((msg: WsServerMessage) => void) | null>(null);
@@ -445,7 +453,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
       currentTokenRef.current = token;
 
       const conn = new ChatConnection(
-        () => buildRnWsUrl(serverUrl, stationSlug, currentTokenRef.current),
+        () => buildRnWsUrl(serverUrl, stationSlug, currentTokenRef.current, apiKey),
         (msg) => handleWsMessageRef.current?.(msg),
         (status) => handleStatusChangeRef.current?.(status),
         {
@@ -506,7 +514,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
                 if (cancelled || !freshToken) return;
                 currentTokenRef.current = freshToken;
                 const conn = new ChatConnection(
-                  () => buildRnWsUrl(serverUrl, stationSlug, currentTokenRef.current),
+                  () => buildRnWsUrl(serverUrl, stationSlug, currentTokenRef.current, apiKey),
                   (msg) => handleWsMessageRef.current?.(msg),
                   (status) => handleStatusChangeRef.current?.(status),
                   {
@@ -524,7 +532,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
               if (cancelled) return;
               currentTokenRef.current = undefined;
               const conn = new ChatConnection(
-                () => buildRnWsUrl(serverUrl, stationSlug, currentTokenRef.current),
+                () => buildRnWsUrl(serverUrl, stationSlug, currentTokenRef.current, apiKey),
                 (msg) => handleWsMessageRef.current?.(msg),
                 (status) => handleStatusChangeRef.current?.(status)
               );

@@ -78,7 +78,7 @@ export interface RelayaAuthState {
 }
 
 export interface RelayaAuthOptions {
-  /** Relaya SaaS endpoint — always 'https://api.relaya.chat' */
+/** Relaya SaaS endpoint — always 'https://api.relaya.chat' */
   serverUrl: string;
   /** Your space slug, assigned by Relaya — e.g. 'your-space-slug' */
   spaceSlug: string;
@@ -88,6 +88,11 @@ export interface RelayaAuthOptions {
   refreshTokenStorageKey?: string;
   /** Called when the session ends due to confirmed auth failure or explicit logout */
   onSessionEnded?: (reason: 'logout' | 'refresh-failed') => void;
+  /**
+   * Optional per-space API key (generated in the space admin panel, Native tab).
+   * When provided, sent as `X-Relaya-Api-Key` on every REST request.
+   */
+  apiKey?: string;
 }
 
 export interface RelayaAuthActions {
@@ -192,6 +197,7 @@ export function useRelayaAuth(
     tokenStorage,
     refreshTokenStorageKey = 'relaya_refresh_token',
     onSessionEnded,
+    apiKey,
   } = options;
 
   const [state, setState] = useState<RelayaAuthState>({
@@ -217,7 +223,7 @@ export function useRelayaAuth(
   const getToken = useCallback((): string | null => accessTokenRef.current, []);
 
   // Shared ApiClient — uses getToken so it always sends the latest AT
-  const api = useRef(new ApiClient(serverUrl, getToken)).current;
+  const api = useRef(new ApiClient(serverUrl, getToken, apiKey)).current;
 
   // Guard against React StrictMode double-invocation
   const initStartedRef = useRef(false);

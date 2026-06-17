@@ -14,6 +14,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **`@relaya-chat/react`** — `EmbedSecurityAdmin`, surfaced as an "Embed security" section in `<AdminPanel>` (admin-only). The **iFrame** tab lets space admins view, add, and remove the domains authorized to embed a space; the **Native SDK** tab shows API key status and supports generating, rotating, and revoking an API key, with a one-time full-key reveal after generate/rotate.
 
+- **All packages** — `apiKey` prop / option for per-space API key enforcement. Pass the key generated in the space admin panel's **Native** tab as `apiKey` to `<RelayaChat>`, `<AdminPanel>`, `useRelayaAuth`, and `useRelayaChat`. The key is sent as `X-Relaya-Api-Key` on all REST requests and appended as `?apiKey=` on the WebSocket upgrade URL. Omitting the prop is a no-op — spaces without key enforcement configured are unaffected. Requires Relaya server v1.5.0 or later for enforcement to take effect.
+
 ### Fixed
 
 

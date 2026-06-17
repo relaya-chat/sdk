@@ -11,6 +11,7 @@ export default function CommunityPage() {
     <RelayaChat
       spaceSlug="your-space-slug"
       serverUrl="https://api.relaya.chat"
+      // apiKey="rlk_live_..."   // Required if your space has API key enforcement enabled
     />
   );
 }

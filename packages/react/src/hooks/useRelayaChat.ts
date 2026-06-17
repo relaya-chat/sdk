@@ -58,15 +58,22 @@ export interface RelayaChatOptions {
    * enter a reconnect loop rather than succeeding immediately.
    */
   ensureFreshToken?: () => Promise<string | null>;
+  /**
+   * Optional per-space API key. When provided:
+   * - Sent as `X-Relaya-Api-Key` header on all REST calls via the internal ApiClient.
+   * - Appended as `?apiKey=` on the WebSocket upgrade URL.
+   */
+  apiKey?: string;
 }
 
-function buildWsUrlWithBase(baseUrl: string | undefined, stationSlug: string, token?: string): string {
-  if (!baseUrl) return buildWsUrl(stationSlug, token);
+function buildWsUrlWithBase(baseUrl: string | undefined, stationSlug: string, token?: string, apiKey?: string): string {
+  const apiKeyParam = apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : '';
+  if (!baseUrl) return buildWsUrl(stationSlug, token, apiKey);
 
   const base = new URL(baseUrl, window.location.href);
   const protocol = base.protocol === 'https:' ? 'wss:' : 'ws:';
   const tokenParam = token ? `token=${encodeURIComponent(token)}&` : '';
-  return `${protocol}//${base.host}/ws?${tokenParam}station=${encodeURIComponent(stationSlug)}`;
+  return `${protocol}//${base.host}/ws?${tokenParam}station=${encodeURIComponent(stationSlug)}${apiKeyParam}`;
 }
 
 // ── Types ────────────────────────────────────────────────────
@@ -147,7 +154,7 @@ export function useRelayaChat(
   // Avatar history for temporal tracking (session-only)
   const avatarHistory = useRef<Map<string, AvatarChange[]>>(new Map());
 
-  const api = useRef(new ApiClient(options?.serverUrl ?? '', getToken)).current;
+  const api = useRef(new ApiClient(options?.serverUrl ?? '', getToken, options?.apiKey)).current;
 
   // Refs to hold latest callback versions (defined after callbacks below)
   const handleWsMessageRef = useRef<((msg: WsServerMessage) => void) | null>(null);
@@ -302,7 +309,7 @@ export function useRelayaChat(
           const currentToken = auth.status === 'authenticated'
             ? (getToken() ?? undefined)
             : undefined;
-          return buildWsUrlWithBase(options?.wsBaseUrl, stationSlug, currentToken);
+          return buildWsUrlWithBase(options?.wsBaseUrl, stationSlug, currentToken, options?.apiKey);
         },
         (msg) => handleWsMessageRef.current?.(msg),
         (status) => handleStatusChangeRef.current?.(status),

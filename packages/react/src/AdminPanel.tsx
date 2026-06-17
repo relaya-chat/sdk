@@ -48,9 +48,11 @@ export interface AdminPanelProps {
   manageOwnRefreshToken?: boolean;
   /** Called when the auth session ends. See `RelayaChatProps.onSessionEnded`. */
   onSessionEnded?: (reason: 'logout' | 'refresh-failed') => void;
+  /** Optional per-space API key. See `RelayaChatProps.apiKey`. */
+  apiKey?: string;
 }
 
-export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manageOwnRefreshToken, onSessionEnded }: AdminPanelProps) {
+export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manageOwnRefreshToken, onSessionEnded, apiKey }: AdminPanelProps) {
   // Same default-derivation as RelayaChat — explicit prop wins; otherwise
   // honor the ?managed=host URL param so iframe-hosted admin panels pick up
   // host-managed mode automatically.
@@ -61,6 +63,7 @@ export function AdminPanel({ className, spaceSlug, serverUrl = '', token, manage
     initialToken: token ?? null,
     manageOwnRefreshToken: effectiveManageOwnRT,
     onSessionEnded,
+    apiKey,
   });
 
   const { user, station, stationSlug, getToken } = auth;

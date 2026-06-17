@@ -22,7 +22,7 @@ import type { ReplyingTo } from './MessageInput.js';
 import { appConfig } from '../config.js';
 
 interface ChatWindowProps {
-  auth: AuthState & AuthActions;
+auth: AuthState & AuthActions;
   showBranding?: boolean;
   serverUrl?: string;
   /**
@@ -38,13 +38,15 @@ interface ChatWindowProps {
    * renders AdminPanel in the right pane — the gear icon is redundant there).
    */
   hideAdmin?: boolean;
+  /** Optional per-space API key. Forwarded to ApiClient and WS URL. */
+  apiKey?: string;
 }
 
 const SIDEBAR_WIDTH_KEY = 'relaya_sidebar_width';
 const SIDEBAR_BREAKPOINT = 768;
 const SIDEBAR_DEFAULT_WIDTH = 220;
 
-export default function ChatWindow({ auth, showBranding = true, serverUrl, hideSignOut = false, hideAdmin = false }: ChatWindowProps) {
+export default function ChatWindow({ auth, showBranding = true, serverUrl, hideSignOut = false, hideAdmin = false, apiKey }: ChatWindowProps) {
 
   const { user, station, stationSlug, getToken } = auth;
 
@@ -66,7 +68,7 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
   const [replyingTo, setReplyingTo] = useState<ReplyingTo | null>(null);
   const [stickers, setStickers] = useState([] as Awaited<ReturnType<ApiClient['getStickers']>>['stickers']);
   const [soundUrls, setSoundUrls] = useState<StationSoundsResponse>({ mentionSoundUrl: null, channelSoundUrl: null });
-  const apiRef = useRef(new ApiClient(serverUrl ?? '', getToken));
+  const apiRef = useRef(new ApiClient(serverUrl ?? '', getToken, apiKey));
 
   // ── Sidebar resize state ──────────────────────────────────────────────────
   const chatBodyRef = useRef<HTMLDivElement>(null);
@@ -121,6 +123,7 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
     wsBaseUrl: serverUrl,
     onForcedLogout: auth.logout,
     ensureFreshToken: auth.ensureFreshToken,
+    apiKey,
   });
 
   useEffect(() => {

@@ -81,6 +81,7 @@ For a complete runnable example including OTP sign-in, moderation, and AppState 
 | `token` | `string` | — | One-time token for host-managed auth handoff |
 | `hideSignOut` | `boolean` | — | Suppress the widget's built-in Sign Out button |
 | `hideAdmin` | `boolean` | — | Suppress the admin gear icon |
+| `apiKey` | `string` | — | Per-space API key (generated in the space admin panel → **Native** tab). Required when your space has API key enforcement enabled. Sent as `X-Relaya-Api-Key` on REST calls and as `?apiKey=` on the WebSocket upgrade. |
 | `onSessionEnded` | `(reason) => void` | — | Called when the session ends (`'logout'` or `'refresh-failed'`) |
 
 ## Troubleshooting
@@ -116,7 +117,9 @@ Ensure `serverUrl` is set to `"https://api.relaya.chat"`. The SDK routes _all_ r
 
 ## Getting a Space
 
-Sign up at [relaya.chat](https://relaya.chat) to create a space (your chat community) and get a `spaceSlug` and API credentials. 15-day free trial, no credit card required.
+Sign up at [relaya.chat](https://relaya.chat) to create a space (your chat community) and get a `spaceSlug`. 15-day free trial, no credit card required.
+
+Once your space is set up, you can optionally generate a per-space API key in the admin panel under **Settings → Native**. Pass this key as the `apiKey` prop when you have **API key enforcement** enabled for your space. Spaces without enforcement configured work without an API key.
 
 ## Documentation
 

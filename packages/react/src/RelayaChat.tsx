@@ -99,6 +99,15 @@ export interface RelayaChatProps {
    * to keep the widget in sync with the host page's theme switching.
    */
   theme?: 'light' | 'dark';
+  /**
+   * Optional per-space API key (generated in the space admin panel, Native tab).
+   * When provided:
+   * - Sent as `X-Relaya-Api-Key` on all REST requests
+   * - Appended as `?apiKey=` on the WebSocket upgrade URL
+   *
+   * Omit for spaces that have not yet configured key enforcement.
+   */
+  apiKey?: string;
 }
 
 
@@ -119,6 +128,7 @@ export function RelayaChat(props: RelayaChatProps) {
           token={props.token}
           manageOwnRefreshToken={props.manageOwnRefreshToken}
           onSessionEnded={props.onSessionEnded}
+          apiKey={props.apiKey}
         />
       ) : (
         <ChatView {...props} />
@@ -141,6 +151,7 @@ function ChatView({
   hideSignOut,
   hideAdmin,
   theme,
+  apiKey,
 }: RelayaChatProps) {
   // Default storage-ownership: explicit prop wins; otherwise derive from the
   // ?managed=host URL param so iframe embeds opt into host-managed mode
@@ -156,6 +167,7 @@ function ChatView({
     initialToken: token ?? null,
     manageOwnRefreshToken: effectiveManageOwnRT,
     onSessionEnded,
+    apiKey,
   });
 
   const [justAuthenticated, setJustAuthenticated] = useState(false);
@@ -287,7 +299,7 @@ function ChatView({
     <div className={rootClass}>
       <div className="app">
         <NotificationMuteProvider>
-          <ChatWindow auth={auth} showBranding={showBranding} serverUrl={serverUrl} hideSignOut={effectiveHideSignOut} hideAdmin={hideAdmin} />
+          <ChatWindow auth={auth} showBranding={showBranding} serverUrl={serverUrl} hideSignOut={effectiveHideSignOut} hideAdmin={hideAdmin} apiKey={apiKey} />
 
         </NotificationMuteProvider>
       </div>

@@ -13,10 +13,12 @@
 export function buildRnWsUrl(
   serverUrl: string,
   stationSlug: string,
-  token?: string
+  token?: string,
+  apiKey?: string
 ): string {
   // Convert http(s):// → ws(s)://
   const wsBase = serverUrl.replace(/^http/, 'ws');
   const tokenParam = token ? `token=${encodeURIComponent(token)}&` : '';
-  return `${wsBase}/ws?${tokenParam}station=${encodeURIComponent(stationSlug)}`;
+  const apiKeyParam = apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : '';
+  return `${wsBase}/ws?${tokenParam}station=${encodeURIComponent(stationSlug)}${apiKeyParam}`;
 }
