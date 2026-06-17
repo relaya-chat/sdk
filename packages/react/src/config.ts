@@ -5,19 +5,12 @@
  *
  * Supported URL params:
  *   ?space=my-space       — space slug (preferred; maps to stationSlug internally)
- *   ?station=my-space     — legacy fallback for deployed iframes (still accepted)
  *   ?theme=dark           — UI theme ('light' | 'dark'; defaults to system preference)
- *   ?token=<magic-link>   — magic-link token (consumed once on verify, then removed from URL)
  *   ?embed=true           — indicates iframe embed context
  *   ?managed=host         — host application owns the session (RT + sign-out)
 
  *
- * The ?space= param is primary per the SDK public API. ?station= is accepted as a
- * backward-compat fallback so existing deployed iframes continue to work. Remove
- * the ?station= fallback only after all known deployed iframes have been updated.
- *
- * The space/station slug and theme values are stable for the lifetime of the page.
- * The token is consumed during auth and should be removed from the URL after use.
+ * The space slug and theme values are stable for the lifetime of the page.
  */
 
 export type Theme = 'light' | 'dark';
@@ -25,8 +18,6 @@ export type Theme = 'light' | 'dark';
 export interface AppConfig {
   spaceSlug: string;
   theme: Theme;
-  /** Magic-link token from the URL, if present (set by the email link). */
-  magicLinkToken: string | null;
   /**
    * Whether the chat is being rendered inside an iframe (e.g. Wix embed).
    * When true: admin/moderation panels are hidden and a pop-out icon is shown.
@@ -66,34 +57,21 @@ export function parseConfig(): AppConfig {
     : themeParam === 'light' ? 'light'
     : (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 
-  const magicLinkToken = params.get('token');
   const embed = params.get('embed') === 'true';
   const admin = params.get('admin') === 'true';
   const managed = params.get('managed') === 'host';
 
-  return { spaceSlug, theme, magicLinkToken, embed, admin, managed };
+  return { spaceSlug, theme, embed, admin, managed };
 }
 
 
 export const appConfig = typeof window !== 'undefined' ? parseConfig() : {
   spaceSlug: '',
   theme: 'light' as Theme,
-  magicLinkToken: null,
   embed: false,
   admin: false,
   managed: false,
 };
-
-/**
- * Remove the magic-link token (and any other one-time URL params) from the
- * browser's address bar without triggering a navigation/reload.
- * Call this after successfully consuming the token.
- */
-export function clearTokenFromUrl(): void {
-  const url = new URL(window.location.href);
-  url.searchParams.delete('token');
-  window.history.replaceState({}, '', url.toString());
-}
 
 /**
  * Build the WebSocket URL for a given station and optional token.

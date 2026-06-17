@@ -12,6 +12,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Removed
 
+- **`@relaya-chat/react`** — **BREAKING:** `clearTokenFromUrl()` is no longer exported and `magicLinkToken` has been removed from the `RelayaChatConfig` type. These were remnants of an older magic-link sign-in flow that the server no longer supports; the OTP sign-in path (email + 6-digit code) is unaffected. If you called `clearTokenFromUrl()`, remove the call. If you passed `magicLinkToken` to `parseConfig()`, remove that field. No behavior change for users of `<RelayaChat>`.
+
 - **`@relaya-chat/react`** — **BREAKING:** The admin panel has been removed from the SDK. The `AdminPanel` component (and its `AdminPanelProps` type), the `@relaya-chat/react/admin` subpath export, and the `reorderStickersByFilename` helper are gone. Space administration now lives natively in the relaya.chat `/account` dashboard rather than inside the embedded chat client; the in-chat gear icon that opened the panel was removed in the previous release. Consumers embedding `<RelayaChat>` need no changes — chat is unaffected. Anyone importing from `@relaya-chat/react/admin` or referencing `AdminPanel` must remove those imports and administer spaces at relaya.chat. This drops ~5,000 lines of code and all admin stylesheets, so the package and its default CSS bundle are smaller; the default styles no longer carry admin UI.
 
 ### Added

@@ -37,8 +37,6 @@ import { getSpaceTheme, applySpaceTheme } from './spaceThemes.js';
 import { NotificationMuteProvider } from './contexts/NotificationMuteContext.js';
 import { appConfig } from './config.js';
 import { RelayaServerProvider } from './contexts/RelayaServerContext.js';
-import LoginScreen from './components/LoginScreen.js';
-import MagicLinkSent from './components/MagicLinkSent.js';
 import ChatWindow from './components/ChatWindow.js';
 
 export interface RelayaChatProps {
@@ -220,31 +218,8 @@ function ChatView({
     );
   }
 
-  if (auth.status === 'magic-link-sent') {
-    return (
-      <div className={rootClass}>
-        <div className="app">
-          <MagicLinkSent onBack={auth.logout} />
-        </div>
-      </div>
-    );
-  }
-
-  if (auth.status === 'unauthenticated') {
-    return (
-      <div className={rootClass}>
-        <div className="app">
-          <LoginScreen
-            onLogin={auth.login}
-            error={auth.error}
-            stationSlug={spaceSlug}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  // authenticated OR anonymous — both show ChatWindow.
+  // authenticated, anonymous, OR unauthenticated — all render ChatWindow.
+  // ChatWindow shows the chat with an inline "Sign in" button (AuthModal) for unauthenticated users.
   return (
     <div className={rootClass}>
       <div className="app">

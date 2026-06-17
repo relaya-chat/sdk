@@ -19,7 +19,7 @@ export { useModerationConfig } from './hooks/useModerationConfig.js';
 export { useReports } from './hooks/useReports.js';
 
 // ── Config ─────────────────────────────────────────────────────────────────
-export { parseConfig, appConfig, buildWsUrl, clearTokenFromUrl } from './config.js';
+export { parseConfig, appConfig, buildWsUrl } from './config.js';
 export type { AppConfig, Theme } from './config.js';
 
 // ── Space theming ─────────────────────────────────────────────────────────
@@ -86,13 +86,10 @@ export type { RelayaChatProps } from './RelayaChat.js';
 export { default as ChatWindow } from './components/ChatWindow.js';
 export { default as AudioNotification } from './components/AudioNotification.js';
 export { default as AuthModal } from './components/AuthModal.js';
-export { default as AuthSuccess } from './components/AuthSuccess.js';
 export { default as BanModal } from './components/BanModal.js';
 export { default as ChatNameEditor } from './components/ChatNameEditor.js';
 export { default as ConnectionStatus } from './components/ConnectionStatus.js';
 export { default as GravatarStyleModal } from './components/GravatarStyleModal.js';
-export { default as LoginScreen } from './components/LoginScreen.js';
-export { default as MagicLinkSent } from './components/MagicLinkSent.js';
 export { default as MessageAvatar } from './components/MessageAvatar.js';
 export { default as MessageContextMenu } from './components/MessageContextMenu.js';
 export { default as MessageInput } from './components/MessageInput.js';
