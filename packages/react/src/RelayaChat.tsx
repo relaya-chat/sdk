@@ -37,11 +37,9 @@ import { getSpaceTheme, applySpaceTheme } from './spaceThemes.js';
 import { NotificationMuteProvider } from './contexts/NotificationMuteContext.js';
 import { appConfig } from './config.js';
 import { RelayaServerProvider } from './contexts/RelayaServerContext.js';
-import { AdminPanel } from './AdminPanel.js';
 import LoginScreen from './components/LoginScreen.js';
 import MagicLinkSent from './components/MagicLinkSent.js';
 import ChatWindow from './components/ChatWindow.js';
-import AuthSuccess from './components/AuthSuccess.js';
 
 export interface RelayaChatProps {
   /** Base URL for API calls. `""` = same-origin; `"https://api.relaya.chat"` = Relaya SaaS. */
@@ -87,12 +85,6 @@ export interface RelayaChatProps {
    */
   hideSignOut?: boolean;
   /**
-   * Suppress the admin gear icon in the chat header. Set to true when a host
-   * application already provides access to the admin panel (e.g. the
-   * relaya.chat /account dashboard renders AdminPanel in the right pane).
-   */
-  hideAdmin?: boolean;
-  /**
    * Light/dark theme override. When provided, overrides auto-detection
    * (which falls back to `prefers-color-scheme`). Pass the resolved value
    * from your app's theme context — e.g. `resolvedTheme` from next-themes —
@@ -112,34 +104,19 @@ export interface RelayaChatProps {
 
 
 /**
- * Outer router — no hooks here so the early-return for admin mode is safe.
- * appConfig.admin is a module-level constant (set once from URL params at load time).
+ * Outer wrapper — wraps with RelayaServerProvider so all hooks and components
+ * in the tree can access serverUrl via useServerUrl() without prop drilling.
  */
 export function RelayaChat(props: RelayaChatProps) {
-  // Wrap with RelayaServerProvider so all hooks and components in the tree
-  // can access serverUrl via useServerUrl() without prop drilling.
   return (
     <RelayaServerProvider serverUrl={props.serverUrl}>
-      {appConfig.admin ? (
-        <AdminPanel
-          className={props.className}
-          spaceSlug={props.spaceSlug}
-          serverUrl={props.serverUrl}
-          token={props.token}
-          manageOwnRefreshToken={props.manageOwnRefreshToken}
-          onSessionEnded={props.onSessionEnded}
-          apiKey={props.apiKey}
-        />
-      ) : (
-        <ChatView {...props} />
-      )}
+      <ChatView {...props} />
     </RelayaServerProvider>
   );
 }
 
 /**
  * Inner chat view — all hooks called unconditionally.
- * Only rendered when appConfig.admin is false.
  */
 function ChatView({
   serverUrl,
@@ -149,7 +126,6 @@ function ChatView({
   manageOwnRefreshToken,
   onSessionEnded,
   hideSignOut,
-  hideAdmin,
   theme,
   apiKey,
 }: RelayaChatProps) {
@@ -170,7 +146,6 @@ function ChatView({
     apiKey,
   });
 
-  const [justAuthenticated, setJustAuthenticated] = useState(false);
   // showBranding defaults to true (safe default — always show badge until server confirms otherwise)
   const [showBranding, setShowBranding] = useState(true);
 
@@ -228,14 +203,6 @@ function ChatView({
       .catch(() => { /* non-critical — badge defaults to visible on error */ });
   }, [serverUrl, spaceSlug]);
 
-  // Detect magic link authentication (new tab opened from email).
-  // appConfig.magicLinkToken is populated from the ?token= URL param by parseConfig().
-  useEffect(() => {
-    if (appConfig.magicLinkToken && auth.status === 'authenticated') {
-      setJustAuthenticated(true);
-    }
-  }, [auth.status]);
-
   // Build the root class: always includes `relaya-root` (CSS scope boundary);
   // host can optionally append their own class via the `className` prop.
   const rootClass = className ? `relaya-root ${className}` : 'relaya-root';
@@ -277,29 +244,12 @@ function ChatView({
     );
   }
 
-  // Magic link just completed — show success confirmation before entering chat.
-  // Skip in iframe contexts: "close this tab" doesn't apply when auto-authenticating
-  // an embedded widget (e.g., the account dashboard passes ?token= to the iframe).
-  const inIframe = window.self !== window.top;
-  if (auth.status === 'authenticated' && justAuthenticated && !inIframe) {
-    return (
-      <div className={rootClass}>
-        <div className="app">
-          <AuthSuccess
-            stationSlug={auth.stationSlug}
-            userDisplayName={auth.user?.displayName ?? 'there'}
-          />
-        </div>
-      </div>
-    );
-  }
-
   // authenticated OR anonymous — both show ChatWindow.
   return (
     <div className={rootClass}>
       <div className="app">
         <NotificationMuteProvider>
-          <ChatWindow auth={auth} showBranding={showBranding} serverUrl={serverUrl} hideSignOut={effectiveHideSignOut} hideAdmin={hideAdmin} apiKey={apiKey} />
+          <ChatWindow auth={auth} showBranding={showBranding} serverUrl={serverUrl} hideSignOut={effectiveHideSignOut} apiKey={apiKey} />
 
         </NotificationMuteProvider>
       </div>

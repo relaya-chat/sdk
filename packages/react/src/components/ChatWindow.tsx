@@ -4,9 +4,6 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRelayaChat } from '../hooks/useRelayaChat.js';
 import { PERMISSIONS, ApiClient } from '@relaya-chat/core';
 import type { StationSoundsResponse } from '@relaya-chat/core';
-import { HiOutlineCog6Tooth as _HiOutlineCog6Tooth } from 'react-icons/hi2';
-// Cast resolves react-icons IconType vs @types/react ReactNode incompatibility (bigint in ReactNode)
-const HiOutlineCog6Tooth = _HiOutlineCog6Tooth as React.FC<React.SVGProps<SVGSVGElement>>;
 import MessageList from './MessageList.js';
 import MessageInput from './MessageInput.js';
 import UserList from './UserList.js';
@@ -32,12 +29,6 @@ auth: AuthState & AuthActions;
    * widget-rendered Sign Out would be misleading in that mode.
    */
   hideSignOut?: boolean;
-  /**
-   * Suppress the admin gear icon. Set to true when a host application already
-   * provides access to the admin panel (e.g. the relaya.chat /account dashboard
-   * renders AdminPanel in the right pane — the gear icon is redundant there).
-   */
-  hideAdmin?: boolean;
   /** Optional per-space API key. Forwarded to ApiClient and WS URL. */
   apiKey?: string;
 }
@@ -46,7 +37,7 @@ const SIDEBAR_WIDTH_KEY = 'relaya_sidebar_width';
 const SIDEBAR_BREAKPOINT = 768;
 const SIDEBAR_DEFAULT_WIDTH = 220;
 
-export default function ChatWindow({ auth, showBranding = true, serverUrl, hideSignOut = false, hideAdmin = false, apiKey }: ChatWindowProps) {
+export default function ChatWindow({ auth, showBranding = true, serverUrl, hideSignOut = false, apiKey }: ChatWindowProps) {
 
   const { user, station, stationSlug, getToken } = auth;
 
@@ -159,8 +150,6 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
   }, [refreshStickers]);
 
   const canPost = auth.status === 'authenticated' && (user?.permissions.includes(PERMISSIONS.POST) ?? false);
-  const canModerate = user?.permissions.includes(PERMISSIONS.DELETE_ANY) ?? false;
-  const isAdmin = user?.permissions.includes(PERMISSIONS.MANAGE_ROLES) ?? false;
 
   // Embed mode: set by ?embed=true URL param
   const isEmbedded = appConfig.embed;
@@ -187,14 +176,6 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
   /** URL for the pop-out link — same page without ?embed=true. */
   const popOutUrl = (() => {
     const url = new URL(window.location.href);
-    url.searchParams.delete('embed');
-    return url.toString();
-  })();
-
-  /** URL for the admin popup — same page with ?admin=true, without ?embed. */
-  const adminUrl = (() => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('admin', 'true');
     url.searchParams.delete('embed');
     return url.toString();
   })();
@@ -272,20 +253,6 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
         ) : null}
 
 
-        {/* Admin gear icon — rightmost; opens admin popup in a new tab; visible to admin/moderators only.
-            Suppressed when the host already provides admin access (hideAdmin). */}
-        {!hideAdmin && (isAdmin || canModerate) && (
-          <a
-            href={adminUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn--ghost chat-header__admin"
-            title="Open admin panel"
-            aria-label="Open admin panel in new window"
-          >
-            <HiOutlineCog6Tooth className="chat-header__admin-icon" aria-hidden="true" />
-          </a>
-        )}
       </div>
 
       {/* Connection status bar (hidden when connected) */}
