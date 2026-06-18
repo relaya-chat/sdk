@@ -18,7 +18,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **All packages** — `apiKey` prop / option for per-space API key enforcement. Pass the key generated in the space's admin settings at relaya.chat as `apiKey` to `<RelayaChat>`, `useRelayaAuth`, and `useRelayaChat`. The key is sent as `X-Relaya-Api-Key` on all REST requests and appended as `?apiKey=` on the WebSocket upgrade URL. Omitting the prop is a no-op — spaces without key enforcement configured are unaffected. Requires Relaya server v1.5.0 or later for enforcement to take effect.
+- **All packages** — `apiKey` prop / option for per-space API key enforcement. Pass the key generated in the space's admin settings at relaya.chat as `apiKey` to `<RelayaChat>`, `useRelayaAuth`, and `useRelayaChat`. The key is sent as `X-Relaya-Api-Key` on all REST requests and appended as `?apiKey=` on the WebSocket upgrade URL. Omitting the prop is a no-op — spaces without key enforcement configured are unaffected. Requires Relaya server v1.3.0 or later for enforcement to take effect.
 
 ### Fixed
 
