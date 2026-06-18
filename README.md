@@ -80,8 +80,7 @@ For a complete runnable example including OTP sign-in, moderation, and AppState 
 | `manageOwnRefreshToken` | `boolean` | — | `true` (default): widget manages its own session in `localStorage`. `false`: host app owns the session; pass a fresh `token` on each mount. |
 | `token` | `string` | — | One-time token for host-managed auth handoff |
 | `hideSignOut` | `boolean` | — | Suppress the widget's built-in Sign Out button |
-| `hideAdmin` | `boolean` | — | Suppress the admin gear icon |
-| `apiKey` | `string` | — | Per-space API key (generated in the space admin panel → **Native** tab). Required when your space has API key enforcement enabled. Sent as `X-Relaya-Api-Key` on REST calls and as `?apiKey=` on the WebSocket upgrade. |
+| `apiKey` | `string` | — | Per-space API key (generated in the relaya.chat space admin under **Integration & security**). Required when your space has API key enforcement enabled. Sent as `X-Relaya-Api-Key` on REST calls and as `?apiKey=` on the WebSocket upgrade. |
 | `onSessionEnded` | `(reason) => void` | — | Called when the session ends (`'logout'` or `'refresh-failed'`) |
 
 ## Troubleshooting
@@ -105,12 +104,12 @@ Ensure `serverUrl` is set to `"https://api.relaya.chat"`. The SDK routes _all_ r
 - **Real-time messaging** via WebSocket — auto-reconnects on network drops, no polling
 - **OTP authentication** — email-based one-time codes, no passwords, 33-day sessions
 - **Moderation built in** — ban management, message deletion, report review — included on every plan
-- **Admin panel** — built-in moderator UI (React package)
+- **Native admin at relaya.chat** - moderation and space settings live in the Relaya account dashboard
 - **Custom sticker sets** — upload your own stickers for on-brand community expression
 - **Chat history & export** — configurable archive up to 180 days, CSV export, searchable from admin
 - **Custom branding** — visual theme editor, CSS custom properties, light/dark mode
 - **Country & IP controls** — country allowlist/blocklist and IP ban tools for compliance and abuse management
-- **No-cookie architecture** — access token in memory + refresh token in `localStorage`; no cookies; no cookie-consent banner; works in cross-origin iframes
+- **No-cookie architecture** — 30-minute access token in memory + a rotating refresh token in `localStorage`; no cookies; no cookie-consent banner; works in cross-origin iframes
 - **App Store compliant** — built to satisfy Apple's UGC guidelines from day one
 - **Three integration paths** — iframe embed (no-code), React component, React Native hooks — one subscription covers all
 - **TypeScript** — fully typed, strict mode
@@ -119,7 +118,7 @@ Ensure `serverUrl` is set to `"https://api.relaya.chat"`. The SDK routes _all_ r
 
 Sign up at [relaya.chat](https://relaya.chat) to create a space (your chat community) and get a `spaceSlug`. 15-day free trial, no credit card required.
 
-Once your space is set up, you can optionally generate a per-space API key in the admin panel under **Settings → Native**. Pass this key as the `apiKey` prop when you have **API key enforcement** enabled for your space. Spaces without enforcement configured work without an API key.
+Once your space is set up, you can optionally generate a per-space API key in the admin panel under **Integration & security**. Pass this key as the `apiKey` prop when you have **API key enforcement** enabled for your space. Spaces without enforcement configured work without an API key.
 
 ## Documentation
 

@@ -1,80 +1,84 @@
-# Authentication — @relaya-chat/react
+# Authentication - @relaya-chat/react
 
-## What Relaya™ does for you
+Relaya handles user sign-in and session management for the web widget. Users authenticate with a one-time email code. Your app does not need an auth backend for chat.
 
-Relaya uses a **short-lived access token + rotating refresh token** model. Your users authenticate once with a one-time code sent to their email. After that, Relaya handles everything:
+## Token model
 
-- **Access token (15 minutes):** Held only in JavaScript memory — never written to storage. Used for every API call and WebSocket connection. Silently refreshed in the background before it expires, so the user never notices.
-- **Refresh token (33-day inactivity window):** Stored in `localStorage` (keyed to the Relaya widget domain — the parent page cannot read it). Persists across browser close/reopen and is shared across tabs. If the user revisits within 33 days of their last activity, they are automatically re-authenticated without re-entering their email or code. If they are inactive for longer, they see the sign-in prompt again.
-- **No cookies.** Relaya does not set any cookies. Your users are not subject to cookie-consent requirements because of Relaya.
-- **Theft detection.** If a refresh token is somehow replayed after it has already been used, Relaya detects the anomaly and revokes the entire session family — forcing a fresh sign-in.
+| Token | Lifetime | Storage | Purpose |
+|---|---|---|---|
+| Access token (AT) | About 30 minutes | JavaScript memory only | REST auth and WebSocket auth |
+| Refresh token (RT) | 33-day rolling inactivity window | localStorage.relaya_refresh_token by default | Silent restore and AT refresh |
 
-**You build none of this.** Mount the component. Auth is handled entirely inside it.
+No cookies are used by chat auth. API calls use Authorization: Bearer <AT>. WebSocket connections use ?token=<AT>.
 
----
+Every refresh consumes the old RT and returns a new AT+RT. The SDK writes the new RT immediately. The web package includes multi-tab race protection so a losing tab does not clear a newer RT written by a winning tab.
 
-## What you need to do
+## Default widget mode
 
-### 1. Mount the component
+In normal <RelayaChat> use, the SDK owns localStorage.relaya_refresh_token:
 
 ```tsx
-import { RelayaChat } from '@relaya-chat/react';
-import '@relaya-chat/react/styles';
-
-function MyPage() {
-  return (
-    <RelayaChat
-      spaceSlug="your-space-slug"
-      apiUrl="https://api.relaya.chat"
-    />
-  );
-}
+<RelayaChat
+  spaceSlug="your-space-slug"
+  serverUrl="https://api.relaya.chat"
+/>
 ```
 
-Users who attempt to chat are prompted for their email inline. They receive a 6-digit code, enter it inline, and are authenticated. No redirect, no popup required.
+On mount, the widget tries to restore a session by refreshing the stored RT. If no RT exists, users can read anonymously and are prompted to sign in before posting.
 
-### 2. Iframe embed context
+## Host-managed mode
 
-If you are embedding Relaya in a cross-origin iframe (e.g., from a Wix or Squarespace site), no extra configuration is needed. Relaya uses `localStorage` (not cookies) for its refresh token, which is not affected by third-party cookie restrictions (ITP, Privacy Sandbox).
+Advanced host apps can own the RT themselves:
 
-The refresh token is keyed to the Relaya widget domain (`chat.relayaplatform.com`). The parent page's JavaScript cannot access it — same-origin policy prevents cross-frame storage access.
+```tsx
+<RelayaChat
+  spaceSlug="your-space-slug"
+  serverUrl="https://api.relaya.chat"
+  token={oneTimeToken}
+  manageOwnRefreshToken={false}
+  hideSignOut
+  onSessionEnded={() => redirectToHostSignIn()}
+/>
+```
 
-> **iOS Safari note:** In cross-origin iframes, Safari ITP may clear `localStorage` after approximately 7 days without a direct user interaction with the widget domain. Active users who interact with the chat widget are not affected.
+When manageOwnRefreshToken={false}, the widget must not read, write, or clear localStorage.relaya_refresh_token. The host owns durable session state and should provide fresh handoff tokens on mount.
 
-### 3. No CORS credential configuration required
+## API keys and iframe allowlists
 
-Relaya does not use `credentials: 'include'` for any API calls. Auth is carried via `Authorization: Bearer` headers built entirely client-side. No server-side CORS credential configuration is needed on your end.
+Space admins configure integration security in relaya.chat under the native space admin area.
 
----
+- Iframe embeds are protected by an origin allowlist enforced at WebSocket upgrade time.
+- React SDK usage can require a per-space API key.
+
+Pass the API key when your space has key enforcement enabled:
+
+```tsx
+<RelayaChat
+  spaceSlug="your-space-slug"
+  serverUrl="https://api.relaya.chat"
+  apiKey="rlk_live_..."
+/>
+```
+
+The SDK sends the key as X-Relaya-Api-Key on REST requests and ?apiKey= on WebSocket upgrade. The key does not identify a user; it only binds the integration to a space.
 
 ## Sign-out
 
-Call the `logout` action exposed by `useRelayaAuth`, or use the built-in sign-out UI. On logout, Relaya:
-1. Calls `POST /auth/logout` to delete the refresh token server-side.
-2. Clears the access token from memory.
-3. Clears the refresh token from `localStorage`.
+Calling logout() or using the built-in sign-out UI:
 
----
+1. Posts { refreshToken } to /auth/logout.
+2. Clears the AT from memory.
+3. Clears the RT from localStorage when the widget owns storage.
 
-## Security properties
+Local state is cleared even if the network request fails.
 
-| Property | Detail |
-|---|---|
-| XSS token theft window | 15 minutes (access token expiry) |
-| Persistent credential in JS-accessible storage | Refresh token in `localStorage` — keyed to widget domain, not readable by parent page |
-| Cookie exposure | None |
-| Token reuse detection | Yes — replayed refresh token revokes the entire session |
+## Troubleshooting
 
----
+- If users are unexpectedly signed out, check whether multiple app instances are mounting auth and refreshing the same RT.
+- If WebSocket opens fail after API key enforcement, confirm the same apiKey prop reaches both auth and chat connection paths.
+- If iframe connections fail, confirm the browser Origin exactly matches an allowed origin. Do not include a path or trailing slash.
+- If using host-managed mode, confirm the host is not expecting the widget to persist RTs.
 
-## References
+## Privacy note
 
-This auth design follows published best-practice guidance for browser-based applications and embedded widgets:
-
-- **[IETF draft-ietf-oauth-browser-based-apps (latest)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps)** — Authoritative IETF OAuth Working Group guidance for SPAs and embedded widgets. Recommends short-lived access tokens in memory + rotating refresh tokens in storage, exactly as Relaya implements.
-
-- **[Auth0 — Refresh Token Rotation](https://auth0.com/blog/securing-single-page-applications-with-refresh-token-rotation)** — Industry explanation of why rotating RTs with reuse detection are the right model for browser applications.
-
-- **[Auth0 — Inactivity-based refresh token lifetimes](https://auth0.com/blog/achieving-a-seamless-user-experience-with-refresh-token-inactivity-lifetimes)** — Explains why inactivity-based expiry (used by Relaya) is preferable to hard expiry for user experience without sacrificing security.
-
-- **[Curity — Token Handler / BFF Pattern](https://curity.io/blog/token-handler-the-single-page-applications-new-bff)** — Documents why the classic HTTP-only cookie pattern (BFF) fails in cross-origin iframe deployments, and the AT/RT in-memory pattern as the recommended alternative.
+The widget stores a functional refresh token only for sign-in persistence. It does not set cookies or tracking storage. See PRIVACY.md for integrator-facing privacy language.

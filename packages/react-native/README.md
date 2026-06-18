@@ -154,7 +154,7 @@ Returns `RelayaAuthState & RelayaAuthActions`.
 | `tokenStorage` | `RelayaTokenStorage` | — | Secure storage adapter (see [README-AUTH.md](README-AUTH.md)). **Required.** |
 | `refreshTokenStorageKey` | `string` | `'relaya_refresh_token'` | Key used to store the refresh token. Override only if you need per-space isolation. |
 | `onSessionEnded` | `(reason: 'logout' \| 'refresh-failed') => void` | — | Called when the session ends. Navigate the user to a sign-in screen here. |
-| `apiKey` | `string` | — | Per-space API key (generated in the space admin panel → **Native** tab). Required when your space has API key enforcement enabled. Sent as `X-Relaya-Api-Key` on every REST request. |
+| `apiKey` | `string` | — | Per-space API key (generated in the relaya.chat space admin under **Integration & security**). Required when your space has API key enforcement enabled. Sent as `X-Relaya-Api-Key` on every REST request. |
 
 #### `RelayaAuthState`
 

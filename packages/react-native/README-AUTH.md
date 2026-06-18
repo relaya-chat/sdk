@@ -1,31 +1,20 @@
-# Authentication — @relaya-chat/react-native
+# Authentication - @relaya-chat/react-native
 
-## The AT/RT model
+Relaya React Native auth uses the same AT/RT model as the web SDK, but the host app owns secure token storage and all UI.
 
-Relaya uses a **short-lived access token + rotating refresh token** pair.
-
+## Token model
 | Token | Lifetime | Storage | Purpose |
 |---|---|---|---|
-| Access token (AT) | JWT, ~30 minutes | Memory only — never persisted | REST API auth and WebSocket URL auth |
-| Refresh token (RT) | Opaque, 33-day rolling inactivity window | Secure storage you provide | Silent session restoration and AT rotation |
+| Access token (AT) | About 30 minutes | Memory only | REST auth and WebSocket auth |
+| Refresh token (RT) | 33-day rolling inactivity window | Secure storage adapter supplied by your app | Silent restore and AT refresh |
 
-**What "rolling 33-day window" means:** Every successful token refresh consumes the old RT and issues a new one with a fresh 33-day expiry. A user who opens the app within 33 days of their last activity is silently re-authenticated. A user inactive for more than 33 days must sign in again.
+No cookies are used. The RT is the durable credential. Every /auth/refresh call consumes the old RT and returns a new AT+RT.
 
-**No cookies.** Relaya chat auth uses no cookies.
+## Storage adapter
 
-**Theft detection.** If a refresh token is replayed after it has already been used, Relaya detects the anomaly and revokes the entire session family.
+The SDK does not bundle storage. Provide a RelayaTokenStorage implementation:
 
-### Why AT in memory only?
-
-On a true app cold start (app kill / JS runtime restart), there is no AT. The SDK reads the persisted RT, calls `/auth/refresh`, and the server responds with a freshly rotated AT+RT pair. The new AT goes to memory; the new RT is written back to secure storage. The stored RT is the durable session credential. The AT is an ephemeral capability derived from it.
-
----
-
-## `RelayaTokenStorage` interface
-
-The SDK does not bundle any storage library. Your app provides a `tokenStorage` adapter that satisfies:
-
-```typescript
+```tsx
 export interface RelayaTokenStorage {
   get(key: string): Promise<string | null>;
   set(key: string, value: string): Promise<void>;
@@ -33,12 +22,10 @@ export interface RelayaTokenStorage {
 }
 ```
 
-The SDK calls these three methods with a key of `'relaya_refresh_token'` (or whatever you pass as `refreshTokenStorageKey`). Only the RT is stored — the AT is never written to storage.
+Expo example:
 
-### Expo SecureStore adapter (recommended for Expo)
-
-```typescript
-import * as SecureStore from 'expo-secure-store';
+```tsx
+import * as SecureStore from "expo-secure-store";
 
 export const relayaTokenStorage = {
   get: (key: string) => SecureStore.getItemAsync(key),
@@ -47,112 +34,73 @@ export const relayaTokenStorage = {
 };
 ```
 
-Install: `npx expo install expo-secure-store`
-
-### react-native-keychain adapter (bare React Native)
-
-```typescript
-import * as Keychain from 'react-native-keychain';
-
-export const relayaTokenStorage = {
-  get: async (key: string) => {
-    const creds = await Keychain.getGenericPassword({ service: key });
-    return creds ? creds.password : null;
-  },
-  set: (key: string, value: string) =>
-    Keychain.setGenericPassword('relaya', value, { service: key }),
-  delete: (key: string) => Keychain.resetGenericPassword({ service: key }),
-};
-```
-
-Install: `npm install react-native-keychain`
-
-> **Do not use `AsyncStorage` for token storage.** AsyncStorage is unencrypted and readable by anyone with device access or a debugger. It is not appropriate for session credentials.
-
----
+Use Expo SecureStore, Keychain, or equivalent secure storage. Do not use AsyncStorage for refresh tokens.
 
 ## Session lifecycle
 
-### On mount (app start / screen mount)
+On mount:
 
-1. The hook reads the RT from `tokenStorage`.
-2. If no RT is found: `status` transitions to `'anonymous'`. No network call is made.
-3. If an RT exists: the hook calls `POST /auth/refresh` with the RT.
-   - **Success:** new AT stored in memory, new RT written to `tokenStorage`, user and station metadata loaded, `status` → `'authenticated'`.
-   - **Confirmed auth failure (401/403):** RT cleared from storage, `status` → `'anonymous'`, `onSessionEnded('refresh-failed')` called.
-   - **Transient failure (network error, 5xx):** RT preserved, `status` → `'anonymous'` temporarily, one retry scheduled after 10 seconds. If the retry also fails transiently, the RT is kept in storage for the next app launch.
+1. useRelayaAuth reads the RT from tokenStorage.
+2. If none exists, auth becomes anonymous.
+3. If an RT exists, the hook calls /auth/refresh.
+4. On success, the hook stores the new RT and keeps the AT in memory.
+5. On confirmed 401/403, the hook clears storage and calls onSessionEnded("refresh-failed").
+6. On transient network failure, the hook preserves the RT and retries later.
 
-Mount `useRelayaAuth` at the app root (layout or provider), not inside individual screens. The AT lives only in the hook's memory — remounting the hook means reading secure storage again.
+Mount useRelayaAuth at app/root level. If mounted per screen, each navigation remount can re-read storage and create avoidable refresh churn.
 
-### OTP sign-in
-
-```tsx
-// Step 1 — send code
-const { pendingId } = await auth.requestCode('user@example.com');
-
-// Step 2 — verify code
-await auth.verifyCode(pendingId, '123456');
-// auth.status is now 'authenticated'
-```
-
-`verifyCode` persists the returned `refreshToken` to `tokenStorage` and keeps the `accessToken` in memory only.
-
-### `ensureFreshToken()`
-
-Call this before opening an authenticated WebSocket or making an API call that needs a guaranteed-fresh token.
-
-- If the current AT has more than 2 minutes remaining: returns it immediately (no network call).
-- If the AT is expired or near expiry: calls `/auth/refresh`, rotates both tokens, returns the new AT.
-- If no authenticated session exists: returns `null`.
-
-Concurrent calls sharing the same RT are deduplicated — the RT is spent exactly once per refresh cycle.
-
-`useRelayaChat` calls `ensureFreshToken()` automatically before opening a WebSocket connection.
-
-### AppState / foreground handling
-
-Both hooks listen to React Native `AppState` changes independently:
-
-**`useRelayaAuth`:** When the app returns to `'active'` and `status === 'authenticated'`, `ensureFreshToken()` is called. If the AT is still fresh, this is a no-op. If it has expired, it silently refreshes via the stored RT.
-
-**`useRelayaChat`:** Manages the WebSocket lifecycle around backgrounding. On `'background'` or `'inactive'`, it starts a `backgroundDisconnectDelayMs` timer (default 3 minutes). On `'active'` before the timer fires, the timer is cancelled and the existing connection is kept. On `'active'` after the timer has fired (long absence), if no connection exists, `ensureFreshToken()` is called and the connection is reopened with a fresh AT.
-
-### Logout
+## OTP sign-in
 
 ```tsx
-await auth.logout();
-// auth.status is now 'anonymous'
+const { pendingId } = await auth.requestCode("user@example.com");
+await auth.verifyCode(pendingId, code);
 ```
 
-Logout:
-1. POSTs `{ refreshToken }` to `/auth/logout` — no Authorization header needed.
-2. Clears the AT from memory.
-3. Calls `tokenStorage.delete()` to remove the RT from device storage.
-4. Sets `status` to `'anonymous'`.
-5. Calls `onSessionEnded('logout')` if provided.
+verifyCode stores the returned RT using tokenStorage and keeps the AT in memory.
 
-Local state is cleared regardless of whether the server call succeeds.
+```tsx
+ensureFreshToken()
+```
 
----
+Call this before opening authenticated WebSockets or making API calls that need a guaranteed-fresh token. useRelayaChat already calls it before WebSocket open/reopen.
 
-## Security properties
+Concurrent refreshes for the same RT are deduplicated so the RT is spent once per refresh cycle.
 
-| Property | Detail |
-|---|---|
-| AT storage | Memory only — never written to disk |
-| RT storage | OS-encrypted, via your `tokenStorage` adapter |
-| Cookie exposure | None — Relaya chat auth uses no cookies |
-| Token reuse detection | Yes — replayed RT revokes the entire session family |
-| Session persistence across app launches | Yes — within the 33-day rolling inactivity window |
-| Session expiry for inactive users | RT expires after 33 days of inactivity; user must sign in again |
+## API keys
 
-The refresh token is only as secure as the `tokenStorage` implementation you provide. SecureStore (Expo) and Keychain (bare RN) on a non-jailbroken device offer hardware-backed credential protection equivalent in strength to HTTP-only cookies on the web. AsyncStorage is not acceptable for this use case.
+If your space has API key enforcement enabled, pass the same key to both hooks:
 
----
+```tsx
+const auth = useRelayaAuth({
+  serverUrl: "https://api.relaya.chat",
+  spaceSlug: "your-space-slug",
+  tokenStorage,
+  apiKey: "rlk_live_...",
+});
 
-## References
+const chat = useRelayaChat({
+  serverUrl: "https://api.relaya.chat",
+  spaceSlug: "your-space-slug",
+  authState: auth,
+  getToken: auth.getToken,
+  ensureFreshToken: auth.ensureFreshToken,
+  apiKey: "rlk_live_...",
+});
+```
 
-- **[IETF draft-ietf-oauth-browser-based-apps](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps)** — Authoritative IETF OAuth Working Group guidance recommending short-lived ATs in memory and rotating RTs in storage.
-- **[Auth0 — Refresh Token Rotation](https://auth0.com/blog/securing-single-page-applications-with-refresh-token-rotation)** — Why rotating RTs with reuse detection are the right model for web and mobile apps.
-- **[Auth0 — Inactivity-based refresh token lifetimes](https://auth0.com/blog/achieving-a-seamless-user-experience-with-refresh-token-inactivity-lifetimes)** — Why rolling inactivity expiry is preferable to hard expiry for UX without sacrificing security.
-- **[IETF RFC 8252 — OAuth 2.0 for Native Apps](https://www.rfc-editor.org/rfc/rfc8252)** — Best-practice RFC for OAuth 2.0 in native applications. Covers token storage and why OS secure storage is the right credential store.
+The SDK sends the key as X-Relaya-Api-Key on REST and ?apiKey= on WebSocket upgrade. The API key identifies the integration, not the user.
+
+## Logout
+
+```tsx
+logout()
+```
+
+Posts { refreshToken } to /auth/logout, clears AT memory, deletes the RT from secure storage, sets auth to anonymous, and calls onSessionEnded("logout") when provided. Local state is cleared regardless of network success.
+
+## Debugging checklist
+- Secure storage adapter must persist the rotated RT returned by every refresh.
+- ensureFreshToken() returning null can mean transient network failure, not only sign-out.
+- If WS connects anonymously when it should be authenticated, verify the auth hook is mounted once and auth.status is authenticated.
+- If API key enforcement is active, pass apiKey to both useRelayaAuth and useRelayaChat.
+Keep refreshTokenStorageKey stable unless you intentionally isolate sessions. 
