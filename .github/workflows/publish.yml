@@ -45,5 +45,12 @@ jobs:
       # Publishes all workspaces where "private" is not true.
       # Provenance attestations are published automatically by npm Trusted
       # Publishing — the --provenance flag is not required here.
+      # Pre-releases (marked as prerelease in GitHub) go to the "next" dist-tag
+      # so consumers on a caret range do not accidentally receive a beta.
       - name: Publish to npm
-        run: npm publish --workspaces --access public
+        run: |
+          if [ "${{ github.event.release.prerelease }}" = "true" ]; then
+            npm publish --workspaces --access public --tag next
+          else
+            npm publish --workspaces --access public
+          fi

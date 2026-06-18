@@ -1,6 +1,6 @@
 {
   "name": "@relaya-chat/core",
-  "version": "1.4.0",
+  "version": "2.0.0-beta.1",
   "private": false,
   "description": "Real-time community chat primitives for Relaya™ — TypeScript types, REST API client, WebSocket connection manager. Connects to the Relaya™ SaaS at api.relaya.chat. Works in browser and React Native.",
   "keywords": [
