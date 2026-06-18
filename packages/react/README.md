@@ -195,7 +195,26 @@ The complete `--sp-*` surface is public and stable. Override any of these on `.r
 }
 ```
 
-**Note:** When an admin saves a colour override via the space theme editor (in the chat's admin panel), that override takes priority over CSS variable values set here. The two layers coexist cleanly.
+### What space admins can override
+
+Space owners access the Theme panel from the gear icon in the chat header. They can independently set light and dark values for 12 color slots. Their changes are stored server-side and always win over your `--sp-*` CSS variable values:
+
+| Admin panel label | CSS var overridden |
+|---|---|
+| Chat background | `--relaya-color-bg` |
+| Others' message bubbles | `--relaya-color-message-bg` |
+| Your message bubbles | `--relaya-color-message-own-bg` |
+| Body text | `--relaya-color-text` |
+| Secondary/muted text | `--relaya-color-text-secondary` |
+| Message input background | `--relaya-color-input-bg` |
+| Message input text | `--relaya-color-input-text` |
+| Send button background | `--relaya-color-btn-bg` |
+| Send button icon | `--relaya-color-btn-text` |
+| Moderator name color | `--relaya-color-name-mod` |
+| Link color | `--relaya-color-link` |
+| Link hover/active | `--relaya-color-link-active` |
+
+Admin overrides are applied as inline `:root` styles, which outrank CSS file rules. If you want a CSS override to survive an admin change, target `.relaya-root { --relaya-color-message-own-bg: ... }` instead of `:root`.
 
 ### Custom fonts
 
@@ -258,6 +277,22 @@ Relaya also responds to `data-theme="dark"` on `<html>` (the `[data-theme]` patt
 ```js
 document.documentElement.setAttribute('data-theme', 'dark');
 ```
+
+### Opting out of default styles
+
+By default `<RelayaChat>` auto-injects the widget stylesheet into `<head>` on first mount. To take full styling control yourself, call `removeRelayaStyles()` before the first render:
+
+```tsx
+import { removeRelayaStyles } from '@relaya-chat/react';
+
+removeRelayaStyles(); // call once, before the first <RelayaChat> render
+
+export default function App() {
+  return <RelayaChat spaceSlug="..." serverUrl="..." />;
+}
+```
+
+After calling this, you are responsible for all widget styling. All widget class names (`.relaya-root`, `.chat-header`, `.message-item__bubble`, etc.) are still present and can be targeted in your own stylesheet. The `.relaya-root` scope boundary still applies.
 
 ---
 
