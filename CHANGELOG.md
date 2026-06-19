@@ -8,6 +8,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Documentation
+
+- **All packages** — Clarified that `hideDeletedMessages` on `AuthStation` /
+  `RelayaAuthStation` is a **read-only, server-set value**. It reflects the
+  space-level admin setting configured at relaya.chat and is populated by the
+  server when the auth hook loads station data. SDK consumers should read this
+  field to decide whether to hide deleted message rows in their UI, but must
+  not attempt to set or pass it as a configuration option — there is no
+  supported way to override it from the client. The correct usage pattern is:
+
+  ```ts
+  // React Native example — hide deleted rows for non-moderators when the
+  // space admin has enabled the setting.
+  const hideDeleted = auth.station?.hideDeletedMessages ?? false;
+  ```
+
+  The property is optional (`boolean | undefined`) because it may be absent
+  immediately after OTP verification; it is populated on the next auth
+  refresh or app restart.
+
+---
+
 ## [2.0.0-beta.1] — 2026-06-18
 
 ### Removed

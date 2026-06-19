@@ -27,7 +27,13 @@ export interface AuthStation {
   headerName?: string | null;
   /** Sign-in button label override. Null = use the default 'Sign in' text. */
   signInLabel?: string | null;
-  /** When true, chat clients hide deleted messages instead of showing a placeholder. */
+  /**
+   * Read-only. Reflects the server's space-level admin setting. When true,
+   * the space is configured to hide deleted messages for non-moderator users
+   * rather than showing a "Message removed" placeholder. This value is set
+   * by the server — it cannot be configured by SDK consumers. Space admin
+   * settings are managed at relaya.chat.
+   */
   hideDeletedMessages?: boolean;
 }
 

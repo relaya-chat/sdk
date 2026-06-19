@@ -59,12 +59,14 @@ export interface RelayaAuthStation {
   name: string;
   slug: string;
   /**
-   * When true, the space prefers that deleted messages be omitted from the
-   * rendered history instead of showing a "Message removed" placeholder.
+   * Read-only. Reflects the server's space-level admin setting. When true,
+   * the space is configured to omit deleted messages from the rendered history
+   * instead of showing a "Message removed" placeholder. This value is set by
+   * the server — it cannot be configured by SDK consumers. Space admin settings
+   * are managed at relaya.chat.
    * RN rendering is consumer-owned: honor this flag when building your message
-   * list (and keep showing deleted messages to moderators if you support
-   * moderation). Populated on the mount/refresh auth path; may be undefined
-   * immediately after OTP verify until the next app launch refreshes it.
+   * list (keep showing deleted messages to moderators if you support moderation).
+   * May be undefined immediately after OTP verify until auth state is refreshed.
    */
   hideDeletedMessages?: boolean;
 }
