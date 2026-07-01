@@ -217,7 +217,7 @@ export function createWsMessageHandler(
           if (pending.length === 1) {
             return {
               ...prev,
-              optimistic: markOptimisticFailed(prev.optimistic, pending[0].clientId),
+              optimistic: markOptimisticFailed(prev.optimistic, pending[0].clientId, msg.message),
               error: msg.message,
             };
           }

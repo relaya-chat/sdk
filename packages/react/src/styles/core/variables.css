@@ -28,7 +28,8 @@
   --relaya-color-deleted-bg: #f1f3f5;
   --relaya-color-deleted-text: #868e96;
   --relaya-color-optimistic-bg: #cce5ff;
-  --relaya-color-failed-bg: #f8d7da;
+  --relaya-color-failed-bg: #fff3cd;
+  --relaya-color-failed-text: var(--relaya-color-text-muted);
   --relaya-color-status-bar: #343a40;
   --relaya-color-status-text: #ffffff;
 
@@ -75,6 +76,9 @@
   /* Send button - S1/S2: defaults match own-message bubble so all three stay in sync */
   --sp-send-btn-bg:      var(--sp-own-msg-bg);
   --sp-send-btn-text:    var(--sp-own-msg-text);
+  /* Failed message bubble - overridable per-space */
+  --sp-failed-msg-bg:    var(--relaya-color-failed-bg);
+  --sp-failed-msg-text:  var(--relaya-color-failed-text);
 }
 
 [data-theme="dark"],
@@ -101,7 +105,8 @@
   --relaya-color-deleted-bg: #2d333b;
   --relaya-color-deleted-text: #8b949e;
   --relaya-color-optimistic-bg: #1f3a5c;
-  --relaya-color-failed-bg: #3d1f1f;
+  --relaya-color-failed-bg: #3d3000;
+  --relaya-color-failed-text: var(--relaya-color-text-muted);
   --relaya-color-status-bar: #1c2128;
   --relaya-color-status-text: #e6edf3;
 }

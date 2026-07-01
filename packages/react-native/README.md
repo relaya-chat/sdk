@@ -199,7 +199,7 @@ Returns `RelayaChatState & RelayaChatActions`.
 | Field | Type | Description |
 |---|---|---|
 | `messages` | `Message[]` | Current confirmed messages. |
-| `optimistic` | `OptimisticMessage[]` | Pending optimistic messages (sending / failed). |
+| `optimistic` | `OptimisticMessage[]` | Pending optimistic messages. Each has `status: 'sending' \| 'failed'` and, when failed, an `errorMessage` string with the server's rejection reason. |
 | `users` | `OnlineUser[]` | Currently online users. |
 | `userCount` | `number` | Online user count. |
 | `totalCount` | `number` | Total channel member count. |
@@ -208,6 +208,27 @@ Returns `RelayaChatState & RelayaChatActions`.
 | `loadingOlder` | `boolean` | Older-message load in progress. |
 | `hasOlderMessages` | `boolean` | Whether more history is available to load. |
 | `error` | `string \| null` | Last error message. |
+
+#### Rendering failed / rejected messages
+
+When the server rejects a message (e.g. content policy), the `OptimisticMessage` in `chat.optimistic` transitions to `status: 'failed'` and gains an `errorMessage` field with the human-readable rejection reason. Show it clearly in your UI:
+
+```tsx
+{optimistic.map(msg => (
+  <View key={msg.clientId} style={msg.status === 'failed' ? styles.failedBubble : styles.sendingBubble}>
+    <Text style={msg.status === 'failed' ? styles.failedText : styles.sendingText}>
+      {msg.content}
+    </Text>
+    {msg.status === 'failed' && msg.errorMessage && (
+      <Text style={styles.errorLabel}>
+        {'\u26a0\ufe0f'} {msg.errorMessage}
+      </Text>
+    )}
+  </View>
+))}
+```
+
+Always render `errorMessage` when present - Apple App Store Guideline 1.2 (UGC) requires that users receive visible feedback when their content is rejected.
 
 #### `RelayaChatActions`
 

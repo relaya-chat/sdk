@@ -182,6 +182,8 @@ The complete `--sp-*` surface is public and stable. Override any of these on `.r
 | `--sp-time-color` | Timestamp label color | `var(--relaya-color-text-faint)` |
 | `--sp-send-btn-bg` | Send button background | inherits `--sp-own-msg-bg` |
 | `--sp-send-btn-text` | Send button icon color | inherits `--sp-own-msg-text` |
+| `--sp-failed-msg-bg` | Rejected/failed message bubble background | `#fff3cd` (amber yellow) |
+| `--sp-failed-msg-text` | Rejected/failed message text and status color | `var(--relaya-color-text-muted)` |
 
 **Example — dark header with custom font:**
 

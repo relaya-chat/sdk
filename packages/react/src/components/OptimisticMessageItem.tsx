@@ -26,7 +26,11 @@ export default function OptimisticMessageItem({
   const bareImageUrl = getSingleImageUrl(expandedContent);
   const isBareImageMessage = !!bareImageUrl;
   const statusLabel =
-    msg.status === 'sending' ? 'Sending…' : msg.status === 'failed' ? '⚠ Failed' : '';
+    msg.status === 'sending'
+      ? 'Sending…'
+      : msg.status === 'failed'
+        ? `⚠ ${msg.errorMessage ?? 'Failed'}`
+        : '';
 
   return (
     <div

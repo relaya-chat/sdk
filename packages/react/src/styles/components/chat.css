@@ -446,7 +446,12 @@
 }
 
 .relaya-root .message-item--failed .message-item__bubble {
-  background: var(--relaya-color-failed-bg);
+  background: var(--sp-failed-msg-bg);
+  color: var(--sp-failed-msg-text);
+}
+
+.relaya-root .message-item--failed .message-item__status {
+  color: var(--sp-failed-msg-text);
 }
 
 /* Desktop hover actions removed - replaced by unified context menu */

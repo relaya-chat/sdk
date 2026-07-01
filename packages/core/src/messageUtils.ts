@@ -71,6 +71,8 @@ export interface OptimisticMessage {
   authorAvatarUrl: string | null;
   createdAt: Date;
   status: 'sending' | 'sent' | 'failed';
+  /** Server-provided error message when status is 'failed'. */
+  errorMessage?: string;
 }
 
 /**
@@ -94,13 +96,16 @@ export function removeReconciledOptimistic(
  * Mark an optimistic message as failed.
  * Called when a WS `error` response arrives that can be tied back to a clientId,
  * or when the connection drops before the server echoes the message back.
+ *
+ * @param errorMessage - Optional server-provided message to display to the user.
  */
 export function markOptimisticFailed(
   optimistic: OptimisticMessage[],
-  clientId: string
+  clientId: string,
+  errorMessage?: string
 ): OptimisticMessage[] {
   return optimistic.map((m) =>
-    m.clientId === clientId ? { ...m, status: 'failed' as const } : m
+    m.clientId === clientId ? { ...m, status: 'failed' as const, errorMessage } : m
   );
 }
 
