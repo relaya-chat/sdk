@@ -370,6 +370,20 @@ export class ApiClient {
     return this.request('DELETE', `/api/chat/${stationSlug}/bans/${banId}`);
   }
 
+  // ── User blocks ───────────────────────────────────────────────────────────
+
+  async blockUser(stationSlug: string, blockedUserId: string): Promise<{ blockId: string; blockedUserId: string }> {
+    return this.request('POST', `/api/chat/${stationSlug}/blocks`, { blockedUserId });
+  }
+
+  async unblockUser(stationSlug: string, blockedUserId: string): Promise<{ unblocked: boolean }> {
+    return this.request('DELETE', `/api/chat/${stationSlug}/blocks/${encodeURIComponent(blockedUserId)}`);
+  }
+
+  async getBlockedUserIds(stationSlug: string): Promise<{ blockedUserIds: string[] }> {
+    return this.request('GET', `/api/chat/${stationSlug}/blocks`);
+  }
+
   async getBans(stationSlug: string, activeOnly = true): Promise<{ bans: BanWithUser[] }> {
     const qs = activeOnly ? '?active=true' : '';
     return this.request('GET', `/api/chat/${stationSlug}/bans${qs}`);

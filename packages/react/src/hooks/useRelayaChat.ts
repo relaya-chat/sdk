@@ -97,6 +97,8 @@ export interface ChatState {
    *  Null until the first message fetch completes. */
   retentionCutoff: string | null;
   error: string | null;
+  /** User IDs blocked by the current user in this space (from auth:success, updated optimistically). */
+  blockedUserIds: string[];
 }
 
 export interface ReplyData {
@@ -112,6 +114,8 @@ export interface ChatActions {
   deleteMessage: (messageId: string) => Promise<void>;
   banUser: (userId: string, params?: { reason?: string; expiresAt?: string }) => Promise<void>;
   reportMessage: (messageId: string, reason: string, details?: string) => Promise<void>;
+  blockUser: (userId: string) => Promise<void>;
+  unblockUser: (userId: string) => Promise<void>;
   retryFailed: (clientId: string) => void;
   registerMentionSound: (playFn: () => void) => void;
   registerChannelSound: (playFn: () => void) => void;
@@ -141,6 +145,7 @@ export function useRelayaChat(
     hasOlderMessages: false,
     retentionCutoff: null,
     error: null,
+    blockedUserIds: [],
   });
 
   const connRef = useRef<ChatConnection | null>(null);
@@ -166,6 +171,9 @@ export function useRelayaChat(
 
   // Ref for sticker refresh callback (kept fresh each render; avoids stale closures)
   const onStickersUpdatedRef = useRef<(() => void) | undefined>(undefined);
+
+  // Mutable set of blocked user IDs (populated from auth:success, updated by blockUser/unblockUser)
+  const blockedUserIdsRef = useRef<Set<string>>(new Set());
 
   // Get mute state from context (only available for authenticated users)
   const { isMuted } = useNotificationMute();
@@ -209,13 +217,17 @@ export function useRelayaChat(
       );
 
       setState((prev) => {
+        // Filter out messages from blocked users before storing
+        const blocked = blockedUserIdsRef.current;
+        const filtered = msgs.filter((m) => !blocked.has(m.user_id));
+
         let merged: Message[];
         if (opts.after) {
           // Catch-up: append new messages, dedup
-          merged = deduplicateMessages([...prev.messages, ...msgs]);
+          merged = deduplicateMessages([...prev.messages, ...filtered]);
         } else {
           // Initial load
-          merged = msgs;
+          merged = filtered;
         }
         // Track cursor positions
         if (msgs.length > 0) {
@@ -249,6 +261,7 @@ export function useRelayaChat(
     mentionSoundPlayRef,
     channelSoundPlayRef,
     onStickersUpdatedRef,
+    blockedUserIdsRef,
   };
   const handleWsMessage = useCallback(
     createWsMessageHandler(wsHandlerRefs, setState, loadMessages),
@@ -380,7 +393,7 @@ export function useRelayaChat(
         before: oldestMessageIdRef.current,
         limit: PAGE_SIZE,
       });
-      const older = res.messages ?? [];
+      const older = (res.messages ?? []).filter((m) => !blockedUserIdsRef.current.has(m.user_id));
       setState((prev) => {
         const merged = deduplicateMessages([...older, ...prev.messages]);
         if (older.length > 0) {
@@ -505,6 +518,50 @@ export function useRelayaChat(
     return userDirectory.current.get(userId);
   }, []);
 
+  // ── Block / unblock user ───────────────────────────────────
+  const blockUser = useCallback(async (targetUserId: string) => {
+    if (!stationSlug) return;
+    // Optimistic update: add to block list and purge that user's messages from state
+    blockedUserIdsRef.current.add(targetUserId);
+    setState((prev) => ({
+      ...prev,
+      blockedUserIds: [...prev.blockedUserIds, targetUserId],
+      messages: prev.messages.filter((m) => m.user_id !== targetUserId),
+    }));
+    try {
+      await api.blockUser(stationSlug, targetUserId);
+    } catch (err) {
+      // Rollback on failure
+      blockedUserIdsRef.current.delete(targetUserId);
+      setState((prev) => ({
+        ...prev,
+        blockedUserIds: prev.blockedUserIds.filter((id) => id !== targetUserId),
+      }));
+      throw err;
+    }
+  }, [api, stationSlug]);
+
+  const unblockUser = useCallback(async (targetUserId: string) => {
+    if (!stationSlug) return;
+    // Optimistic update
+    blockedUserIdsRef.current.delete(targetUserId);
+    setState((prev) => ({
+      ...prev,
+      blockedUserIds: prev.blockedUserIds.filter((id) => id !== targetUserId),
+    }));
+    try {
+      await api.unblockUser(stationSlug, targetUserId);
+    } catch (err) {
+      // Rollback on failure
+      blockedUserIdsRef.current.add(targetUserId);
+      setState((prev) => ({
+        ...prev,
+        blockedUserIds: [...prev.blockedUserIds, targetUserId],
+      }));
+      throw err;
+    }
+  }, [api, stationSlug]);
+
   return {
     ...state,
     sendMessage,
@@ -513,6 +570,8 @@ export function useRelayaChat(
     deleteMessage,
     banUser,
     reportMessage,
+    blockUser,
+    unblockUser,
     retryFailed,
     registerMentionSound,
     registerChannelSound,

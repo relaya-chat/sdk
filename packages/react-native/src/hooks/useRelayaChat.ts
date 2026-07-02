@@ -100,6 +100,8 @@ export interface RelayaChatState {
   loadingInitial: boolean;
   loadingOlder: boolean;
   hasOlderMessages: boolean;
+  /** IDs of users blocked by the current user in this space. Empty for anonymous users. */
+  blockedUserIds: string[];
   error: string | null;
 }
 
@@ -116,6 +118,10 @@ export interface RelayaChatActions {
   deleteMessage: (messageId: string) => Promise<void>;
   banUser: (userId: string, params?: { reason?: string; expiresAt?: string }) => Promise<void>;
   reportMessage: (messageId: string, reason: string, details?: string) => Promise<void>;
+  /** Block a user in this space. Optimistically removes their messages; rolls back on failure. */
+  blockUser: (userId: string) => Promise<void>;
+  /** Unblock a previously blocked user. Optimistically removes them from the block list. */
+  unblockUser: (userId: string) => Promise<void>;
   getUserInfo: (userId: string) => UserInfo | undefined;
   getAvatarForMessage: (userId: string, messageTime: Date) => string | null;
 }
@@ -147,6 +153,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
     loadingInitial: false,
     loadingOlder: false,
     hasOlderMessages: false,
+    blockedUserIds: [],
     error: null,
   });
 
@@ -154,6 +161,8 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
   const oldestMessageIdRef = useRef<string | undefined>(undefined);
   const newestMessageIdRef = useRef<string | undefined>(undefined);
   const pendingClientIds = useRef<Map<string, string>>(new Map());
+  // Mutable set of blocked user IDs (populated from auth:success, updated by blockUser/unblockUser)
+  const blockedUserIdsRef = useRef<Set<string>>(new Set());
 
   // Ref-backed guard for loadOlderMessages — avoids stale closure behavior
   const loadingOlderRef = useRef(false);
@@ -214,11 +223,15 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
         const msgs = res.messages ?? [];
 
         setState((prev) => {
+          // Filter out messages from blocked users before storing
+          const blocked = blockedUserIdsRef.current;
+          const filtered = msgs.filter((m) => !blocked.has(m.user_id));
+
           let merged: Message[];
           if (opts.after) {
-            merged = deduplicateMessages([...prev.messages, ...msgs]);
+            merged = deduplicateMessages([...prev.messages, ...filtered]);
           } else {
-            merged = msgs;
+            merged = filtered;
           }
           if (msgs.length > 0) {
             newestMessageIdRef.current = merged[merged.length - 1].id;
@@ -262,6 +275,14 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
             }
           });
 
+          // Populate block list from auth:success
+          const authMsg = msg as typeof msg & { blockedUserIds?: string[] };
+          blockedUserIdsRef.current = new Set(authMsg.blockedUserIds ?? []);
+          setState((prev) => ({
+            ...prev,
+            blockedUserIds: authMsg.blockedUserIds ?? [],
+          }));
+
           // Fresh connect: load initial messages. Reconnect: catch-up already in flight.
           if (!newestMessageIdRef.current) {
             setState((prev) => ({ ...prev, loadingInitial: true }));
@@ -272,6 +293,8 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
 
         case 'message:broadcast': {
           const { message, clientId } = msg;
+          // Silently drop messages from blocked users
+          if (blockedUserIdsRef.current.has(message.user_id)) break;
           setState((prev) => {
             const deduped = deduplicateMessages([...prev.messages, message]);
             const newMessages =
@@ -566,7 +589,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
         before: oldestMessageIdRef.current,
         limit: PAGE_SIZE,
       });
-      const older = res.messages ?? [];
+      const older = (res.messages ?? []).filter((m) => !blockedUserIdsRef.current.has(m.user_id));
       setState((prev) => {
         const merged = deduplicateMessages([...older, ...prev.messages]);
         if (older.length > 0) {
@@ -674,6 +697,51 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
     [api, stationSlug]
   );
 
+  // ── Block / unblock user ───────────────────────────────────────────────────
+
+  const blockUser = useCallback(async (targetUserId: string): Promise<void> => {
+    if (!stationSlug) return;
+    // Optimistic update: add to block list and purge that user's messages from state
+    blockedUserIdsRef.current.add(targetUserId);
+    setState((prev) => ({
+      ...prev,
+      blockedUserIds: [...prev.blockedUserIds, targetUserId],
+      messages: prev.messages.filter((m) => m.user_id !== targetUserId),
+    }));
+    try {
+      await api.blockUser(stationSlug, targetUserId);
+    } catch (err) {
+      // Rollback on failure
+      blockedUserIdsRef.current.delete(targetUserId);
+      setState((prev) => ({
+        ...prev,
+        blockedUserIds: prev.blockedUserIds.filter((id) => id !== targetUserId),
+      }));
+      throw err;
+    }
+  }, [api, stationSlug]);
+
+  const unblockUser = useCallback(async (targetUserId: string): Promise<void> => {
+    if (!stationSlug) return;
+    // Optimistic update
+    blockedUserIdsRef.current.delete(targetUserId);
+    setState((prev) => ({
+      ...prev,
+      blockedUserIds: prev.blockedUserIds.filter((id) => id !== targetUserId),
+    }));
+    try {
+      await api.unblockUser(stationSlug, targetUserId);
+    } catch (err) {
+      // Rollback on failure
+      blockedUserIdsRef.current.add(targetUserId);
+      setState((prev) => ({
+        ...prev,
+        blockedUserIds: [...prev.blockedUserIds, targetUserId],
+      }));
+      throw err;
+    }
+  }, [api, stationSlug]);
+
   // ── Expose user directory lookup ───────────────────────────────────────────
 
   const getUserInfo = useCallback(
@@ -689,6 +757,8 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
     deleteMessage,
     banUser,
     reportMessage,
+    blockUser,
+    unblockUser,
     getUserInfo,
     getAvatarForMessage,
   };

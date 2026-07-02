@@ -19,11 +19,13 @@ interface MessageContextMenuProps {
   showDelete?: boolean;
   showReport?: boolean;
   showBan?: boolean;
+  showBlock?: boolean;
   onReply?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   onReport?: () => void;
   onBan?: () => void;
+  onBlock?: () => void;
 }
 
 export default function MessageContextMenu({
@@ -39,11 +41,13 @@ export default function MessageContextMenu({
   showDelete,
   showReport,
   showBan,
+  showBlock,
   onReply,
   onEdit,
   onDelete,
   onReport,
   onBan,
+  onBlock,
 }: MessageContextMenuProps) {
   // Boundary-aware positioning to prevent iframe clipping
   const menuWidth = 220;
@@ -75,14 +79,15 @@ export default function MessageContextMenu({
     if (showDelete) itemCount++;
     if (showReport) itemCount++;
     if (showBan) itemCount++;
+    if (showBlock) itemCount++;
     
     // Each item ~40px + divider 1px + padding
     const baseHeight = itemCount * 40;
-    const messageActionsExist = showReply || showEdit || showDelete || showReport || showBan;
+    const messageActionsExist = showReply || showEdit || showDelete || showReport || showBan || showBlock;
     const dividerHeight = showAvatarOptions && messageActionsExist ? 1 : 0;
     
     // Add divider between Reply and other message actions (for other people's messages)
-    const replyDividerHeight = showReply && (showReport || showBan || showDelete) ? 1 : 0;
+    const replyDividerHeight = showReply && (showReport || showBan || showBlock || showDelete) ? 1 : 0;
     
     return baseHeight + dividerHeight + replyDividerHeight + 4;
   }
@@ -124,11 +129,11 @@ export default function MessageContextMenu({
     </button>
   );
 
-  const hasAnyItems = showAvatarOptions || showReply || showEdit || showDelete || showReport || showBan;
+  const hasAnyItems = showAvatarOptions || showReply || showEdit || showDelete || showReport || showBan || showBlock;
   if (!hasAnyItems) return null;
 
-  const showAvatarDivider = showAvatarOptions && (showReply || showEdit || showDelete || showReport || showBan);
-  const showReplyDivider = showReply && (showReport || showBan || showDelete);
+  const showAvatarDivider = showAvatarOptions && (showReply || showEdit || showDelete || showReport || showBan || showBlock);
+  const showReplyDivider = showReply && (showReport || showBan || showBlock || showDelete);
 
   return (
     <>
@@ -215,6 +220,11 @@ export default function MessageContextMenu({
         {showReport && onReport && (
           <MenuItem onClick={onReport} icon="🚩">
             Report
+          </MenuItem>
+        )}
+        {showBlock && onBlock && (
+          <MenuItem onClick={onBlock} icon="🚫">
+            Block user
           </MenuItem>
         )}
         {showBan && onBan && (

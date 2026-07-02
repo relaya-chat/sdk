@@ -276,9 +276,11 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
           retentionCutoff={chat.retentionCutoff}
           onLoadOlder={chat.loadOlderMessages}
           onEdit={chat.editMessage}
+          blockedUserIds={chat.blockedUserIds}
           onDelete={chat.deleteMessage}
           onBan={chat.banUser}
           onReport={chat.reportMessage}
+          onBlock={chat.blockUser}
           onRetry={chat.retryFailed}
           onReply={(messageId, authorName, content) => {
             const excerpt = content.length > 60 ? content.substring(0, 60) + '…' : content;
@@ -295,7 +297,13 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
           />
         )}
 
-        <UserList users={chat.users} currentUserId={user?.id ?? ''} style={sidebarStyle} />
+        <UserList
+          users={chat.users}
+          currentUserId={user?.id ?? ''}
+          blockedUserIds={chat.blockedUserIds}
+          onUnblock={chat.unblockUser}
+          style={sidebarStyle}
+        />
       </div>
 
       {/* Message input */}

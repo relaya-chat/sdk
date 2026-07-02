@@ -25,11 +25,13 @@ interface MessageItemProps {
   stickers: StickerListing[];
   currentUserId: string;
   currentUserPermissions: string[];
+  blockedUserIds: string[];
   stationSlug: string;
   getToken: () => string | null;
   onDelete: (messageId: string) => Promise<void>;
   onBan: (userId: string, params?: { reason?: string; expiresAt?: string }) => Promise<void>;
   onReport: (messageId: string, reason: string, details?: string) => Promise<void>;
+  onBlock: (userId: string) => Promise<void>;
   onReply: (messageId: string, authorName: string, content: string) => void;
   onEdit?: (messageId: string, newContent: string) => Promise<void>;
   onRetry?: (clientId: string) => void;
@@ -42,11 +44,13 @@ export default function MessageItem({
   stickers,
   currentUserId,
   currentUserPermissions,
+  blockedUserIds,
   stationSlug,
   getToken,
   onDelete,
   onBan,
   onReport,
+  onBlock,
   onReply,
   onEdit,
   onRetry,
@@ -115,8 +119,11 @@ export default function MessageItem({
   const showDelete = !isDeleted && (canDeleteAny || (currentUserPermissions.includes(PERMISSIONS.DELETE_OWN) && isOwn));
   const showBan = !isDeleted && canBan && isOtherUser;
   const showReport = !isDeleted && canReport && isOtherUser;
+  // Block: authenticated other users only; hide if already blocked (menu becomes Unblock in UserList instead)
+  const isAlreadyBlocked = blockedUserIds.includes(authorId);
+  const showBlock = !isDeleted && isOtherUser && !!currentUserId && !isAlreadyBlocked;
   const showReply = !isDeleted && isOtherUser;
-  const hasActions = showEdit || showDelete || showBan || showReport || isOwn || showReply;
+  const hasActions = showEdit || showDelete || showBan || showReport || showBlock || isOwn || showReply;
 
   const fetchGallery = async () => {
     if (galleryFetched) return;
@@ -353,6 +360,7 @@ export default function MessageItem({
           showEdit={showEdit}
           showDelete={showDelete}
           showReport={showReport}
+          showBlock={showBlock}
           showBan={showBan}
           onReply={() => {
             closeContextMenu();
@@ -366,6 +374,12 @@ export default function MessageItem({
           onReport={() => {
             closeContextMenu();
             setReportOpen(true);
+          }}
+          onBlock={() => {
+            closeContextMenu();
+            onBlock(authorId).catch((err) => {
+              console.error('Failed to block user:', err);
+            });
           }}
           onBan={() => {
             closeContextMenu();

@@ -28,6 +28,7 @@ const KNOWN_KEYS = [
   '--relaya-color-btn-bg',
   '--relaya-color-btn-text',
   '--relaya-color-name-mod',
+  '--relaya-color-blocked-name',
   '--relaya-color-link',
   '--relaya-color-link-active',
 ] as const;

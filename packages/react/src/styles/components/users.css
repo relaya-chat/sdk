@@ -63,6 +63,29 @@
   color: var(--relaya-color-text-faint);
 }
 
+/* Blocked user name - always italic; color overridable */
+.relaya-root .user-list__name--blocked {
+  font-style: italic;
+  color: var(--sp-blocked-name-color);
+}
+
+/* Unblock button */
+.relaya-root .user-list__unblock-btn {
+  flex-shrink: 0;
+  font-size: var(--relaya-font-size-xs);
+  color: var(--sp-unblock-btn-color);
+  background: var(--sp-unblock-btn-bg);
+  border: none;
+  border-radius: var(--relaya-radius-sm);
+  padding: 2px var(--spacing-xs);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.relaya-root .user-list__unblock-btn:hover {
+  background: var(--sp-unblock-btn-hover-bg);
+}
+
 /* ── Pane Divider (draggable resize handle) ─────────────────── */
 .relaya-root .pane-divider {
   display: none;

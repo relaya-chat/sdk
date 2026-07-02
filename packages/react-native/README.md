@@ -207,7 +207,37 @@ Returns `RelayaChatState & RelayaChatActions`.
 | `loadingInitial` | `boolean` | Initial message load in progress. |
 | `loadingOlder` | `boolean` | Older-message load in progress. |
 | `hasOlderMessages` | `boolean` | Whether more history is available to load. |
+| `blockedUserIds` | `string[]` | IDs of users the current user has blocked. Empty array for anonymous/unauthenticated users. Use this to visually distinguish blocked users' messages and to show an unblock affordance. |
 | `error` | `string \| null` | Last error message. |
+
+#### Blocking users
+
+`blockedUserIds` is an array of user IDs blocked by the current user within this space. It is populated from the server on connect and kept in sync as the user blocks or unblocks.
+
+Use it to visually distinguish messages from blocked users. Apple App Store Guideline 1.2 (UGC) requires that apps give users a way to block other users and that blocked content is visually differentiated - not silently hidden:
+
+```tsx
+{messages.map(msg => {
+  const isBlocked = chat.blockedUserIds.includes(msg.userId);
+  return (
+    <View key={msg.id} style={styles.messageBubble}>
+      <Text style={[styles.senderName, isBlocked && styles.blockedName]}>
+        {msg.displayName}
+      </Text>
+      <Text style={isBlocked ? styles.blockedText : styles.messageText}>
+        {msg.content}
+      </Text>
+      {isBlocked && (
+        <TouchableOpacity onPress={() => chat.unblockUser(msg.userId)}>
+          <Text style={styles.unblockLabel}>Unblock</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+})}
+```
+
+Recommended styles for blocked messages: muted/greyed name text, italic or lighter body text, and an accessible unblock affordance. Do not completely hide blocked messages - they must remain visible in a visually differentiated state.
 
 #### Rendering failed / rejected messages
 
@@ -246,6 +276,8 @@ Always render `errorMessage` when present - Apple App Store Guideline 1.2 (UGC) 
 | `editMessage` | `(messageId: string, newContent: string) => Promise<void>` | Edits a message (own messages only). |
 | `deleteMessage` | `(messageId: string) => Promise<void>` | Deletes a message (moderation permission required). |
 | `banUser` | `(userId: string, params?: { reason?: string; expiresAt?: string }) => Promise<void>` | Bans a user (moderation permission required). |
+| `blockUser` | `(userId: string) => Promise<void>` | Blocks a user. Updates `blockedUserIds` immediately. Idempotent - blocking an already-blocked user is a no-op. |
+| `unblockUser` | `(userId: string) => Promise<void>` | Unblocks a previously blocked user. Updates `blockedUserIds` immediately. |
 | `reportMessage` | `(messageId: string, reason: string, details?: string) => Promise<void>` | Reports a message. |
 | `getUserInfo` | `(userId: string) => UserInfo \| undefined` | Looks up a user from the in-session directory. |
 | `getAvatarForMessage` | `(userId: string, messageTime: Date) => string \| null` | Returns the avatar URL active at the time the message was sent. |

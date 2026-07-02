@@ -35,6 +35,8 @@ export interface WsHandlerRefs {
   channelSoundPlayRef: MutableRefObject<(() => void) | null>;
   /** Callback to refresh sticker list after stickers:updated WS event. Set by ChatWindow via useRelayaChat options. */
   onStickersUpdatedRef: MutableRefObject<(() => void) | undefined>;
+  /** Mutable set of user IDs blocked by the current user (updated by blockUser/unblockUser). */
+  blockedUserIdsRef: MutableRefObject<Set<string>>;
 }
 
 /**
@@ -51,7 +53,7 @@ export function createWsMessageHandler(
 ): (msg: WsServerMessage) => void {
   return (msg: WsServerMessage) => {
     switch (msg.type) {
-      case 'auth:success':
+      case 'auth:success': {
         // Populate user directory from auth:success
         refs.userDirectory.current.clear();
         refs.avatarHistory.current.clear();
@@ -73,6 +75,15 @@ export function createWsMessageHandler(
           }
         });
 
+        // Populate block list from auth:success (server delivers canonical list at connect time).
+        // Cast needed because WsServerMessage type predates this field.
+        const authMsg = msg as typeof msg & { blockedUserIds?: string[] };
+        refs.blockedUserIdsRef.current = new Set(authMsg.blockedUserIds ?? []);
+        setState((prev) => ({
+          ...prev,
+          blockedUserIds: authMsg.blockedUserIds ?? [],
+        }));
+
         // On fresh initial connect (no cursor yet), do a full history load.
         // On reconnect, handleStatusChange('connected') already triggered
         // a catch-up load. Don't overwrite that with a full reset here.
@@ -84,9 +95,12 @@ export function createWsMessageHandler(
           console.log('[auth:success] reconnect — skipping full reload (catch-up already in flight)');
         }
         break;
+      }
 
       case 'message:broadcast': {
         const { message, clientId } = msg;
+        // Silently drop messages from blocked users
+        if (refs.blockedUserIdsRef.current.has(message.user_id)) break;
         setState((prev) => {
           const deduped = deduplicateMessages([...prev.messages, message]);
           // Ring buffer: drop oldest messages when we exceed MAX_MESSAGES

@@ -31,8 +31,10 @@ interface MessageListProps {
   onLoadOlder: () => Promise<void>;
   onEdit: (messageId: string, newContent: string) => Promise<void>;
   onDelete: (messageId: string) => Promise<void>;
+  blockedUserIds: string[];
   onBan: (userId: string, params?: { reason?: string; expiresAt?: string }) => Promise<void>;
   onReport: (messageId: string, reason: string, details?: string) => Promise<void>;
+  onBlock: (userId: string) => Promise<void>;
   onReply: (messageId: string, authorName: string, content: string) => void;
   onRetry: (clientId: string) => void;
   getUserInfo: (userId: string) => UserInfo | undefined;
@@ -56,8 +58,10 @@ export default function MessageList({
   onLoadOlder,
   onEdit,
   onDelete,
+  blockedUserIds,
   onBan,
   onReport,
+  onBlock,
   onReply,
   onRetry,
   getUserInfo,
@@ -179,10 +183,12 @@ export default function MessageList({
             currentUserPermissions={currentUserPermissions}
             stationSlug={stationSlug}
             getToken={getToken}
+            blockedUserIds={blockedUserIds}
             onEdit={onEdit}
             onDelete={onDelete}
             onBan={onBan}
             onReport={onReport}
+            onBlock={onBlock}
             onReply={onReply}
             onRetry={onRetry}
             getUserInfo={getUserInfo}

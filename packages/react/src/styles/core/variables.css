@@ -79,6 +79,11 @@
   /* Failed message bubble - overridable per-space */
   --sp-failed-msg-bg:    var(--relaya-color-failed-bg);
   --sp-failed-msg-text:  var(--relaya-color-failed-text);
+  /* Blocked user in user list - overridable per-space */
+  --sp-blocked-name-color:    var(--relaya-color-blocked-name, var(--relaya-color-text-muted));
+  --sp-unblock-btn-color:     var(--relaya-color-text-muted);
+  --sp-unblock-btn-bg:        transparent;
+  --sp-unblock-btn-hover-bg:  var(--relaya-color-surface);
 }
 
 [data-theme="dark"],
