@@ -230,6 +230,13 @@ When the server rejects a message (e.g. content policy), the `OptimisticMessage`
 
 Always render `errorMessage` when present - Apple App Store Guideline 1.2 (UGC) requires that users receive visible feedback when their content is rejected.
 
+> **App Store warning - content filter:** The Relaya server includes a built-in profanity
+> filter that is **enabled by default** for every space. Space admins can disable it or
+> adjust the word list from the Relaya admin dashboard. If a space admin disables the
+> content filter for a space used in an iOS app, the app may be rejected by Apple under
+> Guideline 1.2 (User-Generated Content). If your app is rejected for this reason,
+> re-enable the content filter in the Relaya admin dashboard and resubmit.
+
 #### `RelayaChatActions`
 
 | Method | Signature | Description |
