@@ -144,6 +144,99 @@ import {
 
 The hooks handle all state, connection management, and auth token refresh. The components accept `className` overrides for custom styling. See the [component reference](https://relaya.chat/docs/react) for the full API.
 
+### `useRelayaChat` — key state and actions
+
+When building a custom UI on top of `useRelayaChat`, the following fields and actions are relevant for moderation and UGC compliance:
+
+**State**
+
+| Field | Type | Description |
+|---|---|---|
+| `messages` | `Message[]` | Confirmed messages in the channel. |
+| `optimistic` | `OptimisticMessage[]` | Pending sends. Each has `status: 'sending' \| 'failed'` and, when failed, an `errorMessage` string with the server's rejection reason. |
+| `blockedUserIds` | `string[]` | IDs of users the current user has blocked in this space. Populated from the server on connect; kept in sync as the user blocks or unblocks. Empty array for anonymous/unauthenticated users. |
+
+**Actions**
+
+| Method | Signature | Description |
+|---|---|---|
+| `reportMessage` | `(messageId: string, reason: string, details?: string) => Promise<void>` | Reports a message. `reason` is one of `'spam' \| 'harassment' \| 'inappropriate' \| 'other'`. |
+| `blockUser` | `(userId: string) => Promise<void>` | Blocks a user in this space. Updates `blockedUserIds` immediately (optimistic). |
+| `unblockUser` | `(userId: string) => Promise<void>` | Unblocks a previously blocked user. Updates `blockedUserIds` immediately. |
+| `deleteMessage` | `(messageId: string) => Promise<void>` | Deletes a message (moderation permission required). |
+| `banUser` | `(userId: string, params?: { reason?: string; expiresAt?: string }) => Promise<void>` | Bans a user from the space (moderation permission required). |
+
+The `<RelayaChat />` component wires all of the above automatically (report and block via `MessageContextMenu`; unblock via `UserList`). The actions above are for custom-assembly builds that render their own UI.
+
+---
+
+## Moderation & UGC compliance
+
+Relaya is built to satisfy **Apple App Store Guideline 1.2 (User-Generated Content)** from day one. All four requirements are met at the server and SDK level:
+
+| Requirement | How it is met |
+|---|---|
+| Filter objectionable material | Server-side profanity filter (`leo-profanity`, ~1,400 words) rejects messages at post time. Error code `CONTENT_FILTERED`. Enabled by default for every space. |
+| Report mechanism | Every authenticated user (including read-only listeners) can report any message. `reportMessage()` on `useRelayaChat`; built into `<RelayaChat />` via the message context menu. Moderators review the report queue in the Relaya admin dashboard. |
+| Block abusive users | Per-space user-to-user block: `blockUser()` / `unblockUser()` on `useRelayaChat`; built into `<RelayaChat />` via the message context menu and user list. Moderator-level ban (`banUser()`) also available. |
+| Published contact info | Satisfied via your App Store listing metadata (support URL) and in-app ToS. Not a server/SDK concern. |
+
+### Rendering failed / rejected messages
+
+When the server rejects a message, the `OptimisticMessage` in `chat.optimistic` transitions to `status: 'failed'` and gains an `errorMessage` field. The built-in `<RelayaChat />` component renders this as an amber bubble below the draft.
+
+For custom-assembly builds, render `errorMessage` clearly:
+
+```tsx
+{optimistic.map(msg => (
+  <div
+    key={msg.clientId}
+    className={msg.status === 'failed' ? 'msg-failed' : 'msg-sending'}
+  >
+    <span>{msg.content}</span>
+    {msg.status === 'failed' && msg.errorMessage && (
+      <span className="msg-error-label">&#9888;&#65039; {msg.errorMessage}</span>
+    )}
+  </div>
+))}
+```
+
+Always show `errorMessage` when present - Apple Guideline 1.2 requires visible feedback when content is rejected.
+
+The failed-bubble appearance in `<RelayaChat />` is customizable via CSS variables:
+
+| Variable | What it controls | Default |
+|---|---|---|
+| `--sp-failed-msg-bg` | Rejected message bubble background | `#fff3cd` (amber yellow) |
+| `--sp-failed-msg-text` | Rejected message text and status label color | `var(--relaya-color-text-muted)` |
+
+> **App Store warning - content filter:** Space admins can disable the profanity filter from
+> the Relaya admin dashboard. If a space admin disables the content filter for a space used
+> in an iOS app, the app may be rejected by Apple under Guideline 1.2. If your app is
+> rejected for this reason, re-enable the content filter in the Relaya admin dashboard and
+> resubmit.
+
+### Blocking - custom assembly
+
+If you are building a custom UI (not using `<RelayaChat />`), you are responsible for rendering the block/unblock affordance. Use `blockedUserIds` to identify blocked senders:
+
+```tsx
+{messages.map(msg => {
+  const isBlocked = chat.blockedUserIds.includes(msg.userId);
+  return (
+    <div key={msg.id} className={isBlocked ? 'message blocked' : 'message'}>
+      <span className="sender">{msg.displayName}</span>
+      <span className="body">{msg.content}</span>
+      {isBlocked && (
+        <button onClick={() => chat.unblockUser(msg.userId)}>Unblock</button>
+      )}
+    </div>
+  );
+})}
+```
+
+Do not completely hide blocked messages - Apple Guideline 1.2 requires that blocked content remains visible in a visually differentiated state.
+
 ---
 
 ## Theming
