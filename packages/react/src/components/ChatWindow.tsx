@@ -302,6 +302,7 @@ export default function ChatWindow({ auth, showBranding = true, serverUrl, hideS
           currentUserId={user?.id ?? ''}
           blockedUserIds={chat.blockedUserIds}
           onUnblock={chat.unblockUser}
+          getUserInfo={chat.getUserInfo}
           style={sidebarStyle}
         />
       </div>

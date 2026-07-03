@@ -10,6 +10,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`@relaya-chat/react`** — `UserList` now shows blocked users who are currently offline (or were never online this session). Previously the blocked-user section was derived by filtering the online-only `users` list, so a blocked user vanished from the sidebar — and the Unblock control along with them — as soon as they disconnected. `UserList` now iterates `blockedUserIds` directly and resolves display names via a new `getUserInfo` prop (wired from `chat.getUserInfo` in `ChatWindow`), falling back to "Unknown User" for a user blocked in a prior session who hasn't been seen this session. Blocked users who are offline still render italicized (`user-list__name--blocked`); blocked users who are currently online render in regular font, so it's clear at a glance whether a block is "biting" a live user.
+
 ---
 
 ## [2.0.0-beta.3] — 2026-07-02
