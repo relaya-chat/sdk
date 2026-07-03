@@ -1,6 +1,6 @@
 {
   "name": "@relaya-chat/react-native",
-  "version": "2.0.0-beta.3",
+  "version": "2.0.0-beta.4",
   "private": false,
   "description": "Real-time community chat hooks for React Native and Expo — OTP auth, WebSocket messaging, moderation. Connects to the Relaya™ SaaS at api.relaya.chat. Headless: bring your own UI.",
   "keywords": [
@@ -52,7 +52,7 @@
     "react-native": ">=0.72.0"
   },
   "dependencies": {
-    "@relaya-chat/core": "2.0.0-beta.3"
+    "@relaya-chat/core": "2.0.0-beta.4"
   },
   "devDependencies": {
     "@react-native-async-storage/async-storage": "^3.0.2",

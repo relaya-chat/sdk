@@ -10,6 +10,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [2.0.0-beta.4] — 2026-07-03
+
+### Added
+
+- **`@relaya-chat/react-native`** — `onStickersUpdated` option added to `useRelayaChat`, invoked when the server broadcasts a `stickers:updated` WS event (e.g. a moderator adds/removes stickers). Mirrors the real-time sticker refresh `@relaya-chat/react` already had; previously React Native had no way to react to this event and required a manual reconnect or restart to pick up sticker changes. No new server or `@relaya-chat/core` dependency - `stickers:updated` and `getStickers()` already existed.
+
 ### Fixed
 
 - **`@relaya-chat/react` + `@relaya-chat/react-native`** — REST-based moderation actions (`deleteMessage`, `banUser`, `reportMessage`, `editMessage`, `blockUser`, `unblockUser`) now await token-freshness (`ensureFreshToken`) before calling the API, mirroring the check already performed before WebSocket connects. Previously these actions used whatever access token was currently cached; a client that stayed continuously foregrounded for the full ~30-minute AT lifetime with no WS reconnect and no background/foreground transition had nothing to trigger a refresh, so the next moderation call could fail with a stale-token 401. The shared check is implemented once as `withFreshToken()` in `@relaya-chat/core`.
