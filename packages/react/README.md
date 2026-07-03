@@ -39,7 +39,7 @@ One subscription covers all three. Pick your path, start in minutes.
 
 **Live demo:** [relaya.chat](https://relaya.chat) — try it in your browser right now.
 
-**Server:** Requires Relaya server v1.2.0 or later. The hosted SaaS (`api.relaya.chat`) always runs the current version.
+**Server:** Requires Relaya server v1.5.0 or later (for `blockUser`/`unblockUser`; earlier servers work but omit blocking). The hosted SaaS (`api.relaya.chat`) always runs the current version.
 
 ---
 

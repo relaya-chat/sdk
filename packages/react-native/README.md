@@ -41,7 +41,7 @@ The SDK does not bundle either storage package. Your app chooses the implementat
 
 ### Server
 
-Requires **Relaya server v1.2.0 or later**. The hosted SaaS (`api.relaya.chat`) always runs the current version.
+Requires **Relaya server v1.5.0 or later** (for `blockUser`/`unblockUser`; earlier servers work but omit blocking). The hosted SaaS (`api.relaya.chat`) always runs the current version.
 
 ---
 

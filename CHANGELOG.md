@@ -12,6 +12,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.0.0-beta.3] — 2026-07-02
+
+### Added
+
+- **`@relaya-chat/react` + `@relaya-chat/react-native`** — User-to-user blocking. `blockUser(userId)` / `unblockUser(userId)` added to `useRelayaChat`, backed by `POST/DELETE /api/chat/:stationSlug/blocks`. New `blockedUserIds: string[]` state field, populated from the server on connect (`auth:success`) and kept in sync with optimistic updates. Messages from blocked users are filtered at every ingestion point — initial load, catch-up, live broadcast, scroll-back, and immediately on block. **`@relaya-chat/react`** adds a "Block user" item to `MessageContextMenu` and an "Unblock" affordance in `UserList` (blocked users shown italicized, sorted after online users). Requires Relaya server v1.5.0 or later; earlier servers simply omit the `blockedUserIds` field and the block endpoints, so the SDK behaves as if no users are blocked.
+
+### Documentation
+
+- **`@relaya-chat/react`** — README gains a "Moderation & UGC compliance" section documenting the full Apple Guideline 1.2 story (filter, report, block) plus the `blockUser`/`unblockUser`/`blockedUserIds`/`reportMessage` API.
+- **`@relaya-chat/react-native`** — README documents `blockedUserIds` usage and adds an App Store warning: space admins can disable the server-side content filter, which may affect Guideline 1.2 compliance for apps using that space.
+- **All packages** — "Server" compatibility line bumped to v1.5.0 or later (previously v1.2.0), reflecting the new block endpoints.
+
+---
+
 ## [2.0.0-beta.2] — 2026-06-19
 
 ### Documentation
