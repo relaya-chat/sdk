@@ -24,6 +24,17 @@
  * - Expose online users list from presence:update messages
  * - Dispatch moderator REST actions (delete, ban)
  * - Dispatch report REST action
+ *
+ * Moderator REST actions (deleteMessage, banUser, reportMessage, editMessage,
+ * blockUser, unblockUser) each await ensureFreshToken() before calling the API.
+ * The WS connect path already did this; without it, a continuously-foregrounded
+ * session (no WS reconnect, no AppState background/foreground transition) could
+ * let the ~30-min access token go stale with nothing to trigger a refresh, so
+ * the next REST moderation call would fail with a 401. ensureFreshToken() only
+ * performs a network round-trip when the token is actually near/past expiry
+ * (see isTokenFresh in useRelayaAuth.ts); otherwise it resolves immediately.
+ * ApiClient reads the token via the getToken() ref callback, so the refreshed
+ * token is picked up automatically without needing to be passed explicitly.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -34,6 +45,7 @@ import {
   ChatConnection,
   generateClientId,
   deduplicateMessages,
+  withFreshToken,
 } from '@relaya-chat/core';
 import type {
   Message,
@@ -503,11 +515,19 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
   );
 
   // ── Moderator REST actions ─────────────────────────────────────────────────
+  //
+  // Each action awaits ensureFreshToken() before calling the API. This mirrors
+  // the WS connect path (openConnection above) and closes the gap where a
+  // continuously-foregrounded session with no WS reconnect and no AppState
+  // background/foreground transition would let the AT go stale, causing these
+  // REST calls to fail with a 401. ensureFreshToken() resolves immediately
+  // when the token is already fresh (see isTokenFresh in useRelayaAuth.ts), so
+  // this adds no meaningful latency in the common case.
 
   const deleteMessage = useCallback(
     async (messageId: string): Promise<void> => {
       if (!stationSlug) return;
-      await api.deleteMessage(stationSlug, messageId);
+      await withFreshToken(ensureFreshToken, () => api.deleteMessage(stationSlug, messageId));
       setState((prev) => ({
         ...prev,
         messages: prev.messages.map((m) =>
@@ -517,7 +537,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
         ),
       }));
     },
-    [api, stationSlug]
+    [api, stationSlug, ensureFreshToken]
   );
 
   const banUser = useCallback(
@@ -526,24 +546,24 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
       params?: { reason?: string; expiresAt?: string }
     ): Promise<void> => {
       if (!stationSlug) return;
-      await api.createBan(stationSlug, targetUserId, params);
+      await withFreshToken(ensureFreshToken, () => api.createBan(stationSlug, targetUserId, params));
     },
-    [api, stationSlug]
+    [api, stationSlug, ensureFreshToken]
   );
 
   const reportMessage = useCallback(
     async (messageId: string, reason: string, details?: string): Promise<void> => {
       if (!stationSlug) return;
-      await api.createReport(stationSlug, messageId, reason, details);
+      await withFreshToken(ensureFreshToken, () => api.createReport(stationSlug, messageId, reason, details));
     },
-    [api, stationSlug]
+    [api, stationSlug, ensureFreshToken]
   );
 
   const editMessage = useCallback(
     async (messageId: string, newContent: string): Promise<void> => {
       if (!stationSlug) return;
       try {
-        const edited = await api.editMessage(stationSlug, messageId, newContent);
+        const edited = await withFreshToken(ensureFreshToken, () => api.editMessage(stationSlug, messageId, newContent));
         setState((prev) => ({
           ...prev,
           messages: prev.messages.map((m) =>
@@ -555,7 +575,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
         throw err;
       }
     },
-    [api, stationSlug]
+    [api, stationSlug, ensureFreshToken]
   );
 
   // ── Block / unblock user ───────────────────────────────────────────────────
@@ -570,7 +590,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
       messages: prev.messages.filter((m) => m.user_id !== targetUserId),
     }));
     try {
-      await api.blockUser(stationSlug, targetUserId);
+      await withFreshToken(ensureFreshToken, () => api.blockUser(stationSlug, targetUserId));
     } catch (err) {
       // Rollback on failure
       blockedUserIdsRef.current.delete(targetUserId);
@@ -580,7 +600,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
       }));
       throw err;
     }
-  }, [api, stationSlug]);
+  }, [api, stationSlug, ensureFreshToken]);
 
   const unblockUser = useCallback(async (targetUserId: string): Promise<void> => {
     if (!stationSlug) return;
@@ -591,7 +611,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
       blockedUserIds: prev.blockedUserIds.filter((id) => id !== targetUserId),
     }));
     try {
-      await api.unblockUser(stationSlug, targetUserId);
+      await withFreshToken(ensureFreshToken, () => api.unblockUser(stationSlug, targetUserId));
     } catch (err) {
       // Rollback on failure
       blockedUserIdsRef.current.add(targetUserId);
@@ -601,7 +621,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
       }));
       throw err;
     }
-  }, [api, stationSlug]);
+  }, [api, stationSlug, ensureFreshToken]);
 
   // ── Expose user directory lookup ───────────────────────────────────────────
 

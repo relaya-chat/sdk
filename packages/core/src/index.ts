@@ -8,3 +8,4 @@ export * from './types.js';
 export * from './messageUtils.js';
 export * from './apiClient.js';
 export * from './chatConnection.js';
+export * from './withFreshToken.js';

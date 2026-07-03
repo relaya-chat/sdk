@@ -15,6 +15,15 @@
  *
  * WebSocket message handling is delegated to chatWsHandlers.ts via
  * createWsMessageHandler() to keep this file under the 400-line threshold.
+ *
+ * Moderator REST actions (deleteMessage, banUser, reportMessage, editMessage,
+ * blockUser, unblockUser) each await options?.ensureFreshToken?.() before
+ * calling the API. The WS connect path already does this (createConnection
+ * below); without it, a continuously-foregrounded tab with no WS reconnect
+ * and no visibilitychange transition could let the ~30-min access token go
+ * stale with nothing to trigger a refresh, causing the next REST moderation
+ * call to fail with a 401. ensureFreshToken() resolves immediately when the
+ * token is already fresh, so this adds no meaningful latency in the common case.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -23,6 +32,7 @@ import {
   ChatConnection,
   generateClientId,
   deduplicateMessages,
+  withFreshToken,
 } from '@relaya-chat/core';
 import type {
   Message,
@@ -55,7 +65,8 @@ export interface RelayaChatOptions {
    * is `'authenticated'`. Should refresh the AT if it is expired or expiring
    * within ~2 minutes. Pass `auth.ensureFreshToken` from `useRelayaAuth`.
    * Without this, a WS reconnect after a long absence may use a stale AT and
-   * enter a reconnect loop rather than succeeding immediately.
+   * enter a reconnect loop rather than succeeding immediately. Also awaited
+   * before each REST moderation action (delete/ban/report/edit/block/unblock).
    */
   ensureFreshToken?: () => Promise<string | null>;
   /**
@@ -458,7 +469,7 @@ export function useRelayaChat(
   // ── Moderator REST actions ─────────────────────────────────
   const deleteMessage = useCallback(async (messageId: string) => {
     if (!stationSlug) return;
-    await api.deleteMessage(stationSlug, messageId);
+    await withFreshToken(options?.ensureFreshToken, () => api.deleteMessage(stationSlug, messageId));
     // Optimistically mark as deleted in local state
     setState((prev) => ({
       ...prev,
@@ -468,15 +479,15 @@ export function useRelayaChat(
           : m
       ),
     }));
-  }, [api, stationSlug]);
+  }, [api, stationSlug, options?.ensureFreshToken]);
 
   const banUser = useCallback(async (
     targetUserId: string,
     params?: { reason?: string; expiresAt?: string }
   ) => {
     if (!stationSlug) return;
-    await api.createBan(stationSlug, targetUserId, params);
-  }, [api, stationSlug]);
+    await withFreshToken(options?.ensureFreshToken, () => api.createBan(stationSlug, targetUserId, params));
+  }, [api, stationSlug, options?.ensureFreshToken]);
 
   const reportMessage = useCallback(async (
     messageId: string,
@@ -484,13 +495,13 @@ export function useRelayaChat(
     details?: string
   ) => {
     if (!stationSlug) return;
-    await api.createReport(stationSlug, messageId, reason, details);
-  }, [api, stationSlug]);
+    await withFreshToken(options?.ensureFreshToken, () => api.createReport(stationSlug, messageId, reason, details));
+  }, [api, stationSlug, options?.ensureFreshToken]);
 
   const editMessage = useCallback(async (messageId: string, newContent: string) => {
     if (!stationSlug) return;
     try {
-      const edited = await api.editMessage(stationSlug, messageId, newContent);
+      const edited = await withFreshToken(options?.ensureFreshToken, () => api.editMessage(stationSlug, messageId, newContent));
       // Optimistically update local state (will be confirmed by WS broadcast)
       setState((prev) => ({
         ...prev,
@@ -502,7 +513,7 @@ export function useRelayaChat(
       setState((prev) => ({ ...prev, error: 'Failed to edit message' }));
       throw err;
     }
-  }, [api, stationSlug]);
+  }, [api, stationSlug, options?.ensureFreshToken]);
 
   // ── Mention sound registration ─────────────────────────────
   const registerMentionSound = useCallback((playFn: () => void) => {
@@ -529,7 +540,7 @@ export function useRelayaChat(
       messages: prev.messages.filter((m) => m.user_id !== targetUserId),
     }));
     try {
-      await api.blockUser(stationSlug, targetUserId);
+      await withFreshToken(options?.ensureFreshToken, () => api.blockUser(stationSlug, targetUserId));
     } catch (err) {
       // Rollback on failure
       blockedUserIdsRef.current.delete(targetUserId);
@@ -539,7 +550,7 @@ export function useRelayaChat(
       }));
       throw err;
     }
-  }, [api, stationSlug]);
+  }, [api, stationSlug, options?.ensureFreshToken]);
 
   const unblockUser = useCallback(async (targetUserId: string) => {
     if (!stationSlug) return;
@@ -550,7 +561,7 @@ export function useRelayaChat(
       blockedUserIds: prev.blockedUserIds.filter((id) => id !== targetUserId),
     }));
     try {
-      await api.unblockUser(stationSlug, targetUserId);
+      await withFreshToken(options?.ensureFreshToken, () => api.unblockUser(stationSlug, targetUserId));
     } catch (err) {
       // Rollback on failure
       blockedUserIdsRef.current.add(targetUserId);
@@ -560,7 +571,7 @@ export function useRelayaChat(
       }));
       throw err;
     }
-  }, [api, stationSlug]);
+  }, [api, stationSlug, options?.ensureFreshToken]);
 
   return {
     ...state,
