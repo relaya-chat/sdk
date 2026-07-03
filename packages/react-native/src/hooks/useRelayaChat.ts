@@ -14,7 +14,6 @@
  * - Builds the WS URL from serverUrl + spaceSlug props (no config.ts)
  * - Wires onAuthRevoked so server-side force_logout / 4001 resets connRef
  * - Has no NotificationMuteContext dependency (host app manages audio)
- * - Has no sticker system (mobile UI handles stickers independently)
  *
  * Responsibilities:
  * - Open and manage a ChatConnection WebSocket instance
@@ -35,8 +34,6 @@ import {
   ChatConnection,
   generateClientId,
   deduplicateMessages,
-  removeReconciledOptimistic,
-  markOptimisticFailed,
 } from '@relaya-chat/core';
 import type {
   Message,
@@ -48,12 +45,12 @@ import type {
 import type { ConnectionStatus } from '@relaya-chat/core';
 import type { RelayaAuthState, RelayaAuthActions } from './useRelayaAuth';
 import { buildRnWsUrl } from '../utils/buildRnWsUrl';
+import { createWsMessageHandler } from './chatWsHandlers';
+import type { WsHandlerRefs } from './chatWsHandlers';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 50;
-const MAX_MESSAGES = 150;
-const MAX_AVATAR_HISTORY = 20;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -88,6 +85,8 @@ export interface RelayaChatOptions {
    * - Appended as `?apiKey=` on the WebSocket upgrade URL
    */
   apiKey?: string;
+  /** Called when the server notifies that the sticker library changed (stickers:updated WS event). */
+  onStickersUpdated?: () => void;
 }
 
 export interface RelayaChatState {
@@ -163,6 +162,8 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
   const pendingClientIds = useRef<Map<string, string>>(new Map());
   // Mutable set of blocked user IDs (populated from auth:success, updated by blockUser/unblockUser)
   const blockedUserIdsRef = useRef<Set<string>>(new Set());
+  // Latest onStickersUpdated callback from options, refreshed every render
+  const onStickersUpdatedRef = useRef<(() => void) | undefined>(options.onStickersUpdated);
 
   // Ref-backed guard for loadOlderMessages — avoids stale closure behavior
   const loadingOlderRef = useRef(false);
@@ -256,158 +257,17 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
 
   // ── WebSocket message handler ──────────────────────────────────────────────
 
+  const wsHandlerRefs: WsHandlerRefs = {
+    userDirectory,
+    avatarHistory,
+    newestMessageIdRef,
+    oldestMessageIdRef,
+    onStickersUpdatedRef,
+    blockedUserIdsRef,
+  };
+
   const handleWsMessage = useCallback(
-    (msg: WsServerMessage): void => {
-      switch (msg.type) {
-        case 'auth:success': {
-          // Populate user directory
-          userDirectory.current.clear();
-          avatarHistory.current.clear();
-
-          msg.users.forEach((user) => {
-            userDirectory.current.set(user.id, {
-              id: user.id,
-              displayName: user.displayName,
-              avatarUrl: user.avatarUrl,
-            });
-            if (user.avatarUrl !== null) {
-              avatarHistory.current.set(user.id, [{ url: user.avatarUrl, changedAt: new Date(0) }]);
-            }
-          });
-
-          // Populate block list from auth:success
-          const authMsg = msg as typeof msg & { blockedUserIds?: string[] };
-          blockedUserIdsRef.current = new Set(authMsg.blockedUserIds ?? []);
-          setState((prev) => ({
-            ...prev,
-            blockedUserIds: authMsg.blockedUserIds ?? [],
-          }));
-
-          // Fresh connect: load initial messages. Reconnect: catch-up already in flight.
-          if (!newestMessageIdRef.current) {
-            setState((prev) => ({ ...prev, loadingInitial: true }));
-            loadMessages();
-          }
-          break;
-        }
-
-        case 'message:broadcast': {
-          const { message, clientId } = msg;
-          // Silently drop messages from blocked users
-          if (blockedUserIdsRef.current.has(message.user_id)) break;
-          setState((prev) => {
-            const deduped = deduplicateMessages([...prev.messages, message]);
-            const newMessages =
-              deduped.length > MAX_MESSAGES
-                ? deduped.slice(deduped.length - MAX_MESSAGES)
-                : deduped;
-            const newOptimistic = removeReconciledOptimistic(prev.optimistic, clientId);
-            newestMessageIdRef.current = message.id;
-            if (newMessages.length > 0) {
-              oldestMessageIdRef.current = newMessages[0].id;
-            }
-            return { ...prev, messages: newMessages, optimistic: newOptimistic };
-          });
-          break;
-        }
-
-        case 'message:deleted': {
-          const { messageId } = msg;
-          setState((prev) => ({
-            ...prev,
-            messages: prev.messages.map((m) =>
-              m.id === messageId
-                ? { ...m, is_deleted: true, content: null as unknown as string }
-                : m
-            ),
-          }));
-          break;
-        }
-
-        case 'message:edited': {
-          const { message } = msg;
-          setState((prev) => ({
-            ...prev,
-            messages: prev.messages.map((m) => (m.id === message.id ? message : m)),
-          }));
-          break;
-        }
-
-        case 'presence:update': {
-          msg.users.forEach((user) => {
-            userDirectory.current.set(user.id, {
-              id: user.id,
-              displayName: user.displayName,
-              avatarUrl: user.avatarUrl,
-            });
-          });
-          setState((prev) => ({
-            ...prev,
-            users: msg.users.map((u) => ({
-              id: u.id,
-              displayName: u.displayName,
-              avatarUrl: u.avatarUrl,
-            })),
-            userCount: msg.userCount,
-            totalCount: msg.totalCount,
-          }));
-          break;
-        }
-
-        case 'user:update': {
-          const { userId: updatedUserId, updates, timestamp } = msg;
-          const existing = userDirectory.current.get(updatedUserId);
-          userDirectory.current.set(updatedUserId, {
-            id: updatedUserId,
-            displayName: updates.displayName ?? existing?.displayName ?? 'Unknown User',
-            avatarUrl:
-              updates.avatarUrl !== undefined
-                ? updates.avatarUrl
-                : (existing?.avatarUrl ?? null),
-          });
-
-          if (updates.avatarUrl !== undefined) {
-            const history = avatarHistory.current.get(updatedUserId) || [];
-            history.push({ url: updates.avatarUrl, changedAt: new Date(timestamp) });
-            const capped =
-              history.length > MAX_AVATAR_HISTORY
-                ? history.slice(history.length - MAX_AVATAR_HISTORY)
-                : history;
-            avatarHistory.current.set(updatedUserId, capped);
-          }
-
-          setState((prev) => ({
-            ...prev,
-            users: prev.users.map((u) =>
-              u.id === updatedUserId ? { ...u, ...updates } : u
-            ),
-          }));
-          break;
-        }
-
-        case 'error': {
-          setState((prev) => {
-            const pending = prev.optimistic.filter((m) => m.status === 'sending');
-            if (pending.length === 1) {
-              return {
-                ...prev,
-                optimistic: markOptimisticFailed(prev.optimistic, pending[0].clientId),
-                error: msg.message,
-              };
-            }
-            return { ...prev, error: msg.message };
-          });
-          break;
-        }
-
-        // mention:notification and channel:notification — host app handles audio
-        case 'mention:notification':
-        case 'channel:notification':
-        case 'stickers:updated':
-        default:
-          break;
-      }
-    },
+    createWsMessageHandler(wsHandlerRefs, setState, loadMessages),
     [loadMessages]
   );
 
@@ -430,6 +290,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
   useEffect(() => {
     handleWsMessageRef.current = handleWsMessage;
     handleStatusChangeRef.current = handleStatusChange;
+    onStickersUpdatedRef.current = options.onStickersUpdated;
   });
 
   // ── Connect / disconnect when auth changes ─────────────────────────────────
