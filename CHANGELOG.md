@@ -10,6 +10,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`@relaya-chat/react-native`** — `useRelayaChat` now fetches the space's `hideDeletedMessages` setting from the server on mount and exposes it as `chat.hideDeletedMessages` in `RelayaChatState`. Previously the hook never read this setting, so toggling "hide deleted messages" off in the space admin had no effect on React Native clients - deleted messages always appeared as a "[message deleted]" placeholder regardless. The hook now calls `api.getStation()` on mount (non-blocking; failure leaves the safe default of `false`). **RN developers must use `chat.hideDeletedMessages` (not `auth.station?.hideDeletedMessages`) to drive deleted-message rendering in their message list**, as `auth.station` reflects the value at sign-in time while `chat.hideDeletedMessages` is always fetched fresh. The example `RelayaMessageList` component has been updated to accept `hideDeletedMessages` and `currentUserPermissions` props and implements the correct filter: non-moderators see deleted messages omitted when the setting is enabled; moderators (`DELETE_ANY` permission) always see the "[message deleted]" placeholder. **Supersedes** the 2.0.0-beta.2 documentation guidance, which incorrectly recommended reading from `auth.station?.hideDeletedMessages`.
+
 ---
 
 ## [2.0.0-beta.4] — 2026-07-03

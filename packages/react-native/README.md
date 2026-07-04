@@ -208,7 +208,35 @@ Returns `RelayaChatState & RelayaChatActions`.
 | `loadingOlder` | `boolean` | Older-message load in progress. |
 | `hasOlderMessages` | `boolean` | Whether more history is available to load. |
 | `blockedUserIds` | `string[]` | IDs of users the current user has blocked. Empty array for anonymous/unauthenticated users. Use this to visually distinguish blocked users' messages and to show an unblock affordance. |
+| `hideDeletedMessages` | `boolean` | When `true`, the space admin has configured deleted messages to be hidden from non-moderator users. See [Rendering deleted messages](#rendering-deleted-messages). |
 | `error` | `string \| null` | Last error message. |
+
+#### Rendering deleted messages
+
+When a moderator deletes a message, the server soft-deletes it and broadcasts the deletion to all connected clients. The deleted message remains in `chat.messages` with `is_deleted: true` and `content: null`.
+
+How your app should render deleted messages depends on the space admin's setting, exposed as `chat.hideDeletedMessages`:
+
+- **`hideDeletedMessages: false`** (default) - Show a visible placeholder (e.g. "Message removed") for all deleted messages. This is the default behavior and keeps the conversation flow visible.
+- **`hideDeletedMessages: true`** - Omit deleted messages entirely for non-moderator users. Moderators always see the placeholder regardless of this setting.
+
+The `DELETE_ANY` permission (from `@relaya-chat/core`) identifies moderators:
+
+```tsx
+import { PERMISSIONS } from '@relaya-chat/core';
+
+// In your message list renderer:
+const canModerate = (auth.user?.permissions ?? []).includes(PERMISSIONS.DELETE_ANY);
+
+const visibleMessages = chat.hideDeletedMessages && !canModerate
+  ? chat.messages.filter((m) => !m.is_deleted)
+  : chat.messages;
+
+// Then render visibleMessages, showing a "Message removed" placeholder
+// for any message where m.is_deleted === true.
+```
+
+The `examples/expo-basic/src/components/RelayaMessageList.tsx` component demonstrates this pattern. Pass `hideDeletedMessages={chat.hideDeletedMessages}` and `currentUserPermissions={auth.user?.permissions ?? []}` to your message list component.
 
 #### Blocking users
 

@@ -113,6 +113,15 @@ export interface RelayaChatState {
   hasOlderMessages: boolean;
   /** IDs of users blocked by the current user in this space. Empty for anonymous users. */
   blockedUserIds: string[];
+  /**
+   * When true, the space admin has configured deleted messages to be hidden
+   * from non-moderator users rather than showing a "Message removed" placeholder.
+   * Use this in your message list renderer to filter out messages where
+   * `is_deleted === true` for users who lack moderation permissions.
+   * Moderators (users with `DELETE_ANY` permission) should always see the
+   * "Message removed" placeholder regardless of this setting.
+   */
+  hideDeletedMessages: boolean;
   error: string | null;
 }
 
@@ -165,6 +174,7 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
     loadingOlder: false,
     hasOlderMessages: false,
     blockedUserIds: [],
+    hideDeletedMessages: false,
     error: null,
   });
 
@@ -304,6 +314,20 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
     handleStatusChangeRef.current = handleStatusChange;
     onStickersUpdatedRef.current = options.onStickersUpdated;
   });
+
+  // ── Fetch station info on mount / slug change ──────────────────────────────
+  // Reads hideDeletedMessages from the public station endpoint. This is the
+  // same call the web ChatWindow makes on mount to drive its MessageList filter.
+  // Non-critical: a fetch failure leaves the default (false = show placeholder).
+
+  useEffect(() => {
+    if (!stationSlug) return;
+    api.getStation(stationSlug)
+      .then((info) => {
+        setState((prev) => ({ ...prev, hideDeletedMessages: info.hideDeletedMessages ?? false }));
+      })
+      .catch(() => { /* non-critical — default false keeps "Message removed" placeholder */ });
+  }, [api, stationSlug]);
 
   // ── Connect / disconnect when auth changes ─────────────────────────────────
 

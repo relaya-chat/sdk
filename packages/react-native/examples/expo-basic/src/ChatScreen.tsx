@@ -191,6 +191,8 @@ export function ChatScreen() {
           messages={chat.messages}
           optimistic={chat.optimistic}
           onLongPressMessage={handleLongPressMessage}
+          hideDeletedMessages={chat.hideDeletedMessages}
+          currentUserPermissions={auth.user?.permissions ?? []}
         />
       </View>
 

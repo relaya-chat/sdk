@@ -5,6 +5,13 @@
  * Intentionally plain — demonstrates the integration contract only.
  * Confirmed messages (from the server) are rendered above optimistic messages.
  * Optimistic messages show a status suffix: "(sending…)" or "(failed)".
+ *
+ * hideDeletedMessages + currentUserPermissions:
+ *   Pass `chat.hideDeletedMessages` and `auth.user?.permissions ?? []` from the
+ *   parent screen. When the space admin has enabled "hide deleted messages",
+ *   non-moderator users see deleted messages omitted entirely. Moderators
+ *   (users with the DELETE_ANY permission) always see the "Message removed"
+ *   placeholder so they retain moderation context.
  */
 import React, { useCallback } from 'react';
 import {
@@ -13,6 +20,7 @@ import {
   Text,
   StyleSheet,
 } from 'react-native';
+import { PERMISSIONS } from '@relaya-chat/core';
 import type { Message, OptimisticMessage } from '@relaya-chat/core';
 
 interface MessageRow {
@@ -26,11 +34,38 @@ interface Props {
   messages: Message[];
   optimistic: OptimisticMessage[];
   onLongPressMessage?: (message: Message) => void;
+  /**
+   * Pass `chat.hideDeletedMessages` from useRelayaChat. When true and the
+   * current user is not a moderator, deleted messages are omitted entirely
+   * instead of showing a "Message removed" placeholder.
+   */
+  hideDeletedMessages?: boolean;
+  /**
+   * Pass `auth.user?.permissions ?? []` from useRelayaAuth. Used to determine
+   * whether the current user is a moderator who should still see the
+   * "Message removed" placeholder even when hideDeletedMessages is true.
+   */
+  currentUserPermissions?: string[];
 }
 
-export function RelayaMessageList({ messages, optimistic, onLongPressMessage }: Props) {
+export function RelayaMessageList({
+  messages,
+  optimistic,
+  onLongPressMessage,
+  hideDeletedMessages = false,
+  currentUserPermissions = [],
+}: Props) {
+  // Moderators always see the "Message removed" placeholder regardless of the
+  // hideDeletedMessages setting, so they retain moderation context.
+  const canModerate = currentUserPermissions.includes(PERMISSIONS.DELETE_ANY);
+
+  const visibleMessages =
+    hideDeletedMessages && !canModerate
+      ? messages.filter((m) => !m.is_deleted)
+      : messages;
+
   const rows: MessageRow[] = [
-    ...messages.map((m): MessageRow => ({ key: m.id, type: 'confirmed', confirmed: m })),
+    ...visibleMessages.map((m): MessageRow => ({ key: m.id, type: 'confirmed', confirmed: m })),
     ...optimistic.map((m): MessageRow => ({ key: m.clientId, type: 'optimistic', optimistic: m })),
   ];
 
