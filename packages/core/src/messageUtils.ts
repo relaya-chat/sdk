@@ -159,6 +159,7 @@ export const IMAGE_URL_ALLOWLIST = {
     'editablegifs.com',
     'imgur.com',
     'i.imgur.com',
+    'klipy.com',
   ],
 } as const;
 
