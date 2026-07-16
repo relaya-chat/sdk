@@ -136,7 +136,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   return { ok: status >= 200 && status < 300, status, statusText: String(status), json: async () => body } as Response;
 }
 function jwt(expOffsetMs: number): string {
-  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
+  const encode = (value: unknown) => btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   return `${encode({ alg: 'none' })}.${encode({ exp: Math.floor((NOW + expOffsetMs) / 1000) })}.sig`;
 }
 

@@ -173,6 +173,7 @@ async function flush(runtime: HookRuntime, cycles = 20): Promise<void> {
 
 const anonymousAuthState: RelayaAuthState = {
   status: 'anonymous', user: null, station: null, error: null,
+  termsAccepted: true, termsUrl: null, termsVersion: null,
 };
 
 function makeOptions(overrides: Partial<RelayaChatOptions> = {}): RelayaChatOptions {
