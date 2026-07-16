@@ -43,8 +43,12 @@ export async function loadAuthenticatedState(
       signInLabel: ((stationData as unknown) as Record<string, unknown>).signInLabel as string | null ?? null,
       hideDeletedMessages: ((stationData as unknown) as Record<string, unknown>).hideDeletedMessages as boolean ?? false,
     },
-
     stationSlug: stationData.slug,
     error: null,
+    // Terms fields default to "accepted" here; the caller overlays the real
+    // values from the auth response (verify-code or refresh) after this call.
+    termsAccepted: true,
+    termsUrl: null,
+    termsVersion: null,
   };
 }

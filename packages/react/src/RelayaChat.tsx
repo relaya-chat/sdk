@@ -38,6 +38,7 @@ import { NotificationMuteProvider } from './contexts/NotificationMuteContext.js'
 import { appConfig } from './config.js';
 import { RelayaServerProvider } from './contexts/RelayaServerContext.js';
 import ChatWindow from './components/ChatWindow.js';
+import TermsAcceptanceScreen from './components/TermsAcceptanceScreen.js';
 
 export interface RelayaChatProps {
   /** Base URL for API calls. `""` = same-origin; `"https://api.relaya.chat"` = Relaya SaaS. */
@@ -213,6 +214,20 @@ function ChatView({
             <div className="connection-spinner" />
             <span>Loading…</span>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // When the user is authenticated but has not yet accepted the current terms
+  // version, show the inline terms acceptance screen before allowing chat access.
+  // This closes the web bypass loophole (users cannot register via web to skip
+  // mobile ToS acceptance — both surfaces enforce acceptance on their own).
+  if (auth.status === 'authenticated' && !auth.termsAccepted) {
+    return (
+      <div className={rootClass}>
+        <div className="app">
+          <TermsAcceptanceScreen auth={auth} />
         </div>
       </div>
     );

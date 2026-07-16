@@ -39,11 +39,23 @@ export interface AuthVerifyResponse {
     name: string;
     slug: string;
   };
+  /** Whether the user has accepted the current terms version for this space. */
+  termsAccepted: boolean;
+  /** URL to the space's community guidelines page. Null when terms are not required. */
+  termsUrl: string | null;
+  /** Opaque version string set by the space admin. Null when terms are not required. */
+  termsVersion: string | null;
 }
 
 export interface AuthRefreshResponse {
   accessToken: string;
   refreshToken: string;
+  /** Whether the user has accepted the current terms version for this space. */
+  termsAccepted: boolean;
+  /** URL to the space's community guidelines page. Null when terms are not required. */
+  termsUrl: string | null;
+  /** Opaque version string set by the space admin. Null when terms are not required. */
+  termsVersion: string | null;
 }
 
 export interface MessagesResponse {
@@ -511,6 +523,17 @@ export class ApiClient {
   /** Returns the per-station audio notification URLs, or null values if none configured. */
   async getSounds(stationSlug: string): Promise<StationSoundsResponse> {
     return this.request('GET', `/api/chat/${encodeURIComponent(stationSlug)}/sounds`);
+  }
+
+  // ── Terms Acceptance ─────────────────────────────────────────────────────
+
+  /**
+   * Records that the authenticated user has accepted the current terms version
+   * for this space. Call after the user confirms the terms UI.
+   * On success, `termsAccepted` in the local AuthState should be set to true.
+   */
+  async acceptTerms(stationSlug: string): Promise<{ ok: boolean }> {
+    return this.request('POST', `/api/chat/${encodeURIComponent(stationSlug)}/terms/accept`);
   }
 
   // ── Space Theme ───────────────────────────────────────────────────────────

@@ -314,3 +314,22 @@
 .relaya-root .auth-success .btn {
   min-width: 140px;
 }
+
+/* ── Terms Acceptance Screen ───────────────────────────────── */
+.relaya-root .terms-link {
+  color: var(--relaya-color-accent);
+  font-size: var(--relaya-font-size-sm);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.relaya-root .terms-link:hover {
+  opacity: 0.8;
+}
+
+.relaya-root .terms-error {
+  color: var(--relaya-color-error, #e53e3e);
+  font-size: var(--relaya-font-size-sm);
+  text-align: center;
+  margin: 0 0 var(--spacing-sm);
+}

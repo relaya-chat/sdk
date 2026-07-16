@@ -22,7 +22,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ApiClient } from '@relaya-chat/core';
-import type { AuthVerifyResponse } from '@relaya-chat/core';
+import type { AuthRefreshResponse, AuthVerifyResponse } from '@relaya-chat/core';
 export type { AuthVerifyResponse };
 import { appConfig } from '../config.js';
 import { openAuthPopup } from './authPopup.js';
@@ -57,6 +57,20 @@ export type {
 
 type RefreshFailure = Extract<RefreshResult, { ok: false }>;
 
+interface TermsFields {
+  termsAccepted: boolean;
+  termsUrl: string | null;
+  termsVersion: string | null;
+}
+
+function extractTermsFields(data: AuthRefreshResponse): TermsFields {
+  return {
+    termsAccepted: data.termsAccepted ?? true,
+    termsUrl: data.termsUrl ?? null,
+    termsVersion: data.termsVersion ?? null,
+  };
+}
+
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & AuthActions {
@@ -83,6 +97,9 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
     station: null,
     stationSlug: configuredSpaceSlug,
     error: null,
+    termsAccepted: true,
+    termsUrl: null,
+    termsVersion: null,
   });
 
   // AT lives only in memory — never written to storage
@@ -153,13 +170,24 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
     setAnonymousState();
   }, [manageOwnRT, setAnonymousState]);
 
-  const storeTokenPair = useCallback((accessToken: string, refreshToken: string) => {
+  // storeTokenPair: lightweight token rotation — updates tokens + optionally applies
+  // fresh terms fields from the refresh response. Used by the scheduled AT timer path.
+  const storeTokenPair = useCallback((
+    accessToken: string,
+    refreshToken: string,
+    terms?: TermsFields
+  ) => {
     clearCoordinationRetryTimer();
     restoreFromStorageInProgressRef.current = false;
     tokenRef.current = accessToken;
     currentRtRef.current = refreshToken;
     if (manageOwnRT) tryStoreRefreshToken(refreshToken);
-    setState(s => s.status === 'authenticated' ? { ...s, token: accessToken } : s);
+    setState(s => {
+      if (s.status !== 'authenticated') return s;
+      return terms
+        ? { ...s, token: accessToken, ...terms }
+        : { ...s, token: accessToken };
+    });
   }, [clearCoordinationRetryTimer, manageOwnRT]);
 
   const refreshTokenPair = useCallback((refreshToken: string) => (
@@ -301,6 +329,8 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
 
   // ── Silent AT auto-refresh ────────────────────────────────────────────────
   // Scheduled after each successful applyTokenPair; reads currentRtRef at fire time.
+  // The refresh response includes fresh terms fields — applied via storeTokenPair
+  // so mid-session terms version changes are reflected on every AT rotation.
 
   const scheduleAtRefresh = useCallback((accessToken: string) => {
     if (refreshTimerRef.current !== null) {
@@ -318,18 +348,28 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
       const rt = currentRtRef.current;
       if (!rt) return;
 
-      runRefreshAsLeader(rt, (at, rtNew) => {
-        storeTokenPair(at, rtNew);
-        scheduleAtRefresh(at);
+      // Use direct refreshTokenPair so we get the full response (including terms)
+      // rather than going through runRefreshAsLeader which only exposes at+rt.
+      refreshTokenPair(rt).then(result => {
+        if (!result.ok) { handleRefreshFailure(result); return; }
+        broadcastTokenRotation(result.accessToken, result.refreshToken);
+        storeTokenPair(result.accessToken, result.refreshToken, extractTermsFields(result));
+        scheduleAtRefresh(result.accessToken);
       });
     }, msUntilRefresh);
-  }, [runRefreshAsLeader, storeTokenPair]);
+  }, [broadcastTokenRotation, handleRefreshFailure, refreshTokenPair, storeTokenPair]);
 
 
   // ── Apply token pair ──────────────────────────────────────────────────────
-  // Called after popup postMessage or inline OTP verify.
+  // Called after popup postMessage (no terms), mount-restore refresh, or OTP verify.
+  // terms is optional: provided when the response includes terms fields (refresh/verify);
+  // absent for the popup postMessage path (terms remain at previous state or default).
 
-  const applyTokenPair = useCallback(async (accessToken: string, refreshToken: string) => {
+  const applyTokenPair = useCallback(async (
+    accessToken: string,
+    refreshToken: string,
+    terms?: TermsFields
+  ) => {
     clearCoordinationRetryTimer();
     restoreFromStorageInProgressRef.current = false;
     tokenRef.current = accessToken;
@@ -337,9 +377,11 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
     if (manageOwnRT) tryStoreRefreshToken(refreshToken);
     scheduleAtRefresh(accessToken);
 
-
     try {
-      setState(await loadAuthenticatedState(api, configuredSpaceSlug, accessToken));
+      const authState = await loadAuthenticatedState(api, configuredSpaceSlug, accessToken);
+      // Overlay terms fields from the auth response if provided; otherwise keep
+      // the defaults from loadAuthenticatedState (termsAccepted: true).
+      setState(terms ? { ...authState, ...terms } : authState);
     } catch (err) {
       if (process.env.NODE_ENV !== 'production') console.warn('[RelayaAuth] Falling back to anonymous after token apply failure', { spaceSlug: configuredSpaceSlug, err });
       goAnonymous();
@@ -347,9 +389,9 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
   }, [api, clearCoordinationRetryTimer, configuredSpaceSlug, scheduleAtRefresh, goAnonymous, manageOwnRT]);
 
 
-  // Backward-compat: called when OTP is verified inline (non-popup path)
+  // Called when OTP is verified inline (non-popup path) — passes terms from response
   const applyVerifyResponse = useCallback((data: AuthVerifyResponse) => {
-    void applyTokenPair(data.accessToken, data.refreshToken);
+    void applyTokenPair(data.accessToken, data.refreshToken, extractTermsFields(data));
   }, [applyTokenPair]);
 
 
@@ -434,11 +476,12 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
       if (storedRt) {
         currentRtRef.current = storedRt;
         restoreFromStorageInProgressRef.current = true;
-        runRefreshAsLeader(
-          storedRt,
-          (at, rt) => applyTokenPair(at, rt),
-          { onMissingRt: () => { setAnonymousState(); } }
-        );
+        // Refresh directly so we get the full response (including terms fields).
+        refreshTokenPair(storedRt).then(result => {
+          if (!result.ok) { handleRefreshFailure(result); return; }
+          broadcastTokenRotation(result.accessToken, result.refreshToken);
+          void applyTokenPair(result.accessToken, result.refreshToken, extractTermsFields(result));
+        });
       } else {
         restoreFromStorageInProgressRef.current = false;
         setState(s => ({ ...s, status: 'anonymous', stationSlug: configuredSpaceSlug }));
@@ -541,6 +584,16 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
   }, [goAnonymous, manageOwnRT]);
 
 
+  // ── Accept terms ──────────────────────────────────────────────────────────
+  // Calls POST /api/chat/:stationSlug/terms/accept, then flips termsAccepted to
+  // true in local state. Throws on network/server error — caller handles.
+
+  const acceptTerms = useCallback(async (): Promise<void> => {
+    await api.acceptTerms(configuredSpaceSlug);
+    setState(s => ({ ...s, termsAccepted: true }));
+  }, [api, configuredSpaceSlug]);
+
+
   return {
     ...state,
     login,
@@ -548,5 +601,6 @@ export function useRelayaAuth(options: UseRelayaAuthOptions = {}): AuthState & A
     getToken,
     onOtpVerified: applyVerifyResponse,
     ensureFreshToken,
+    acceptTerms,
   };
 }

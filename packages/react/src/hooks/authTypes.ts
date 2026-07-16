@@ -45,6 +45,17 @@ export interface AuthState {
   station: AuthStation | null;
   stationSlug: string;
   error: string | null;
+  /**
+   * Whether the user has accepted the current terms version for this space.
+   * Always `true` when the space has `requireTerms: false`.
+   * When `false`, the chat surface must show a terms acceptance screen before
+   * allowing the user to interact with chat.
+   */
+  termsAccepted: boolean;
+  /** URL to the space's community guidelines page. Null when terms are not required. */
+  termsUrl: string | null;
+  /** Opaque version string set by the space admin. Null when terms are not required. */
+  termsVersion: string | null;
 }
 
 export interface AuthActions {
@@ -59,6 +70,13 @@ export interface AuthActions {
    * null if no authenticated session exists.
    */
   ensureFreshToken: () => Promise<string | null>;
+  /**
+   * Records that the user has accepted the current terms version for this space.
+   * Call after the user confirms the terms UI (e.g. taps "I Agree").
+   * On success, `termsAccepted` transitions to `true`.
+   * Throws on network error — caller handles the error.
+   */
+  acceptTerms: () => Promise<void>;
 }
 
 export interface UseRelayaAuthOptions {

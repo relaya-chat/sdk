@@ -26,7 +26,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState } from 'react-native';
 import type { AppStateStatus } from 'react-native';
 import { ApiClient } from '@relaya-chat/core';
-import type { Permission, Role } from '@relaya-chat/core';
+import type { AuthRefreshResponse, Permission, Role } from '@relaya-chat/core';
 
 // ── Public Types ───────────────────────────────────────────────────────────────
 
@@ -77,10 +77,21 @@ export interface RelayaAuthState {
   user: RelayaAuthUser | null;
   station: RelayaAuthStation | null;
   error: string | null;
+  /**
+   * Whether the user has accepted the current terms version for this space.
+   * Always `true` when the space has `requireTerms: false`.
+   * When `false`, the host app must show a terms acceptance screen before
+   * allowing chat interaction (see Apple UGC Guideline 1.2).
+   */
+  termsAccepted: boolean;
+  /** URL to the space's community guidelines page. Null when terms are not required. */
+  termsUrl: string | null;
+  /** Opaque version string set by the space admin (e.g. "2026-07"). Null when terms are not required. */
+  termsVersion: string | null;
 }
 
 export interface RelayaAuthOptions {
-/** Relaya SaaS endpoint — always 'https://api.relaya.chat' */
+  /** Relaya SaaS endpoint — always 'https://api.relaya.chat' */
   serverUrl: string;
   /** Your space slug, assigned by Relaya — e.g. 'your-space-slug' */
   spaceSlug: string;
@@ -112,6 +123,13 @@ export interface RelayaAuthActions {
   ensureFreshToken: () => Promise<string | null>;
   /** Returns the current AT synchronously from memory. Null if unauthenticated. */
   getToken: () => string | null;
+  /**
+   * Records that the user has accepted the current terms version for this space.
+   * Call after the user confirms the terms UI (e.g. taps "I Agree").
+   * On success, `termsAccepted` transitions to `true`.
+   * Throws on network error — caller handles.
+   */
+  acceptTerms: () => Promise<void>;
 }
 
 // ── Helper: JWT Expiry Decoder ─────────────────────────────────────────────────
@@ -168,15 +186,15 @@ export function isConfirmedAuthFailure(err: unknown): boolean {
  * Concurrent callers sharing the same RT receive the same Promise,
  * preventing the same RT from being spent twice.
  */
-export const inFlightRefreshMap = new Map<string, Promise<{ accessToken: string; refreshToken: string }>>();
+export const inFlightRefreshMap = new Map<string, Promise<AuthRefreshResponse>>();
 
 /**
  * Executes a refresh, deduplicating concurrent callers that hold the same RT.
  */
 export function deduplicatedRefresh(
   rt: string,
-  executor: () => Promise<{ accessToken: string; refreshToken: string }>
-): Promise<{ accessToken: string; refreshToken: string }> {
+  executor: () => Promise<AuthRefreshResponse>
+): Promise<AuthRefreshResponse> {
   const existing = inFlightRefreshMap.get(rt);
   if (existing) return existing;
 
@@ -187,6 +205,18 @@ export function deduplicatedRefresh(
   inFlightRefreshMap.set(rt, promise);
   return promise;
 }
+
+// ── Shared anonymous state ─────────────────────────────────────────────────────
+
+const ANONYMOUS_STATE: RelayaAuthState = {
+  status: 'anonymous',
+  user: null,
+  station: null,
+  error: null,
+  termsAccepted: true,
+  termsUrl: null,
+  termsVersion: null,
+};
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
@@ -207,6 +237,9 @@ export function useRelayaAuth(
     user: null,
     station: null,
     error: null,
+    termsAccepted: true,
+    termsUrl: null,
+    termsVersion: null,
   });
 
   // AT in memory only — never persisted
@@ -233,6 +266,16 @@ export function useRelayaAuth(
   // Track whether a retry timer is scheduled for transient failures
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── Internal: extract terms fields from auth response ─────────────────────
+
+  function extractTerms(data: AuthRefreshResponse) {
+    return {
+      termsAccepted: data.termsAccepted ?? true,
+      termsUrl: data.termsUrl ?? null,
+      termsVersion: data.termsVersion ?? null,
+    };
+  }
+
   // ── Internal: rotate tokens after a successful refresh ────────────────────
 
   const applyTokenRotation = useCallback(
@@ -245,31 +288,36 @@ export function useRelayaAuth(
   );
 
   // ── Internal: load user + station state after successful auth ─────────────
+  // Also accepts terms fields from the refresh/verify response to include in state.
 
-  const loadAuthenticatedState = useCallback(async (): Promise<void> => {
-    const [meData, stationData] = await Promise.all([
-      api.getMe(spaceSlug),
-      api.getStation(spaceSlug),
-    ]);
+  const loadAuthenticatedState = useCallback(
+    async (terms: { termsAccepted: boolean; termsUrl: string | null; termsVersion: string | null }): Promise<void> => {
+      const [meData, stationData] = await Promise.all([
+        api.getMe(spaceSlug),
+        api.getStation(spaceSlug),
+      ]);
 
-    setState({
-      status: 'authenticated',
-      user: {
-        id: meData.userId,
-        displayName: meData.displayName,
-        avatarUrl: null,
-        permissions: meData.permissions,
-        roles: meData.roles,
-      },
-      station: {
-        id: stationData.id,
-        name: stationData.name,
-        slug: stationData.slug,
-        hideDeletedMessages: stationData.hideDeletedMessages,
-      },
-      error: null,
-    });
-  }, [api, spaceSlug]);
+      setState({
+        status: 'authenticated',
+        user: {
+          id: meData.userId,
+          displayName: meData.displayName,
+          avatarUrl: null,
+          permissions: meData.permissions,
+          roles: meData.roles,
+        },
+        station: {
+          id: stationData.id,
+          name: stationData.name,
+          slug: stationData.slug,
+          hideDeletedMessages: stationData.hideDeletedMessages,
+        },
+        error: null,
+        ...terms,
+      });
+    },
+    [api, spaceSlug]
+  );
 
 
   // ── Internal: clear all auth state ───────────────────────────────────────
@@ -278,7 +326,7 @@ export function useRelayaAuth(
     accessTokenRef.current = null;
     refreshTokenRef.current = null;
     await tokenStorage.delete(refreshTokenStorageKey);
-    setState({ status: 'anonymous', user: null, station: null, error: null });
+    setState(ANONYMOUS_STATE);
   }, [tokenStorage, refreshTokenStorageKey]);
 
   // ── Internal: perform RT rotation via /auth/refresh ───────────────────────
@@ -290,6 +338,8 @@ export function useRelayaAuth(
     try {
       const data = await deduplicatedRefresh(rt, () => api.refresh(rt));
       await applyTokenRotation(data.accessToken, data.refreshToken);
+      // Update terms fields on every refresh so mid-session version bumps are applied
+      setState(s => s.status === 'authenticated' ? { ...s, ...extractTerms(data) } : s);
       return data.accessToken;
     } catch (err: unknown) {
       if (isConfirmedAuthFailure(err)) {
@@ -329,7 +379,7 @@ export function useRelayaAuth(
       try {
         const data = await deduplicatedRefresh(storedRt, () => api.refresh(storedRt));
         await applyTokenRotation(data.accessToken, data.refreshToken);
-        await loadAuthenticatedState();
+        await loadAuthenticatedState(extractTerms(data));
       } catch (err: unknown) {
         if (isConfirmedAuthFailure(err)) {
           await clearAuthState();
@@ -337,7 +387,7 @@ export function useRelayaAuth(
           return;
         }
         // Transient failure: preserve RT, show anonymous, schedule one retry
-        setState({ status: 'anonymous', user: null, station: null, error: null });
+        setState(ANONYMOUS_STATE);
 
         retryTimerRef.current = setTimeout(async () => {
           retryTimerRef.current = null;
@@ -346,7 +396,7 @@ export function useRelayaAuth(
           try {
             const retryData = await deduplicatedRefresh(rt, () => api.refresh(rt));
             await applyTokenRotation(retryData.accessToken, retryData.refreshToken);
-            await loadAuthenticatedState();
+            await loadAuthenticatedState(extractTerms(retryData));
           } catch {
             // Second transient failure: remain anonymous; RT preserved for next launch
           }
@@ -355,7 +405,7 @@ export function useRelayaAuth(
     }
 
     initialize().catch(() => {
-      setState({ status: 'anonymous', user: null, station: null, error: null });
+      setState(ANONYMOUS_STATE);
     });
 
     return () => {
@@ -431,6 +481,7 @@ export function useRelayaAuth(
             slug: data.station.slug,
           },
           error: null,
+          ...extractTerms(data),
         });
       } catch (err: unknown) {
         const message =
@@ -463,6 +514,13 @@ export function useRelayaAuth(
     onSessionEndedRef.current?.('logout');
   }, [serverUrl, clearAuthState]);
 
+  // ── acceptTerms ────────────────────────────────────────────────────────────
+
+  const acceptTerms = useCallback(async (): Promise<void> => {
+    await api.acceptTerms(spaceSlug);
+    setState(s => ({ ...s, termsAccepted: true }));
+  }, [api, spaceSlug]);
+
   return {
     ...state,
     requestCode,
@@ -470,5 +528,6 @@ export function useRelayaAuth(
     logout,
     ensureFreshToken,
     getToken,
+    acceptTerms,
   };
 }

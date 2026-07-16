@@ -41,7 +41,7 @@ The SDK does not bundle either storage package. Your app chooses the implementat
 
 ### Server
 
-Requires **Relaya server v1.5.0 or later** (for `blockUser`/`unblockUser`; earlier servers work but omit blocking). The hosted SaaS (`api.relaya.chat`) always runs the current version.
+Requires **Relaya server v1.6.0 or later** (for terms acceptance support; v1.5.0 works but omits `termsAccepted`/`termsUrl`/`termsVersion` from auth responses - the SDK defaults these to `termsAccepted: true` for backward compatibility). The hosted SaaS (`api.relaya.chat`) always runs the current version.
 
 ---
 
@@ -86,6 +86,10 @@ export function ChatScreen() {
 
   if (auth.status !== 'authenticated') {
     return <SignInPanel auth={auth} />;
+  }
+
+  if (!auth.termsAccepted) {
+    return <TermsAcceptancePanel auth={auth} />;
   }
 
   return (
@@ -164,6 +168,9 @@ Returns `RelayaAuthState & RelayaAuthActions`.
 | `user` | `RelayaAuthUser \| null` | Authenticated user info. |
 | `station` | `RelayaAuthStation \| null` | Space/station metadata. |
 | `error` | `string \| null` | Last auth error message. |
+| `termsAccepted` | `boolean` | `true` when the space has no terms requirement, or when the user has accepted the current terms version. `false` when terms are required and the user has not yet accepted the current version. |
+| `termsUrl` | `string \| null` | URL of the space's community guidelines page. `null` when terms are not required. |
+| `termsVersion` | `string \| null` | Opaque version string set by the space admin (e.g. `"2026-07"`). `null` when terms are not required. |
 
 #### `RelayaAuthActions`
 
@@ -174,6 +181,7 @@ Returns `RelayaAuthState & RelayaAuthActions`.
 | `logout` | `() => Promise<void>` | Sends the RT to `/auth/logout`, clears secure storage, transitions to `'anonymous'`. |
 | `ensureFreshToken` | `() => Promise<string \| null>` | Returns a fresh AT. Refreshes via RT when near-expired. Returns `null` when unauthenticated. |
 | `getToken` | `() => string \| null` | Returns the current AT synchronously from memory. Pass to `useRelayaChat`. |
+| `acceptTerms` | `() => Promise<void>` | Records that the user has accepted the current terms version. Call after the user taps "I Agree". On success, `termsAccepted` transitions to `true`. Throws on network error (caller handles). |
 
 ---
 
@@ -309,6 +317,61 @@ Always render `errorMessage` when present - Apple App Store Guideline 1.2 (UGC) 
 | `reportMessage` | `(messageId: string, reason: string, details?: string) => Promise<void>` | Reports a message. |
 | `getUserInfo` | `(userId: string) => UserInfo \| undefined` | Looks up a user from the in-session directory. |
 | `getAvatarForMessage` | `(userId: string, messageTime: Date) => string \| null` | Returns the avatar URL active at the time the message was sent. |
+
+#### Terms acceptance (Apple UGC compliance)
+
+When `auth.termsAccepted` is `false`, your app must show a terms acceptance screen before allowing any chat interaction. This is required by Apple App Store Guideline 1.2 (User-Generated Content).
+
+```tsx
+if (!auth.termsAccepted) {
+  return (
+    <View style={styles.termsContainer}>
+      <Text style={styles.termsTitle}>Community Guidelines</Text>
+      <Text style={styles.termsBody}>
+        You must agree to the community guidelines before joining the chat.
+      </Text>
+
+      {auth.termsUrl && (
+        <TouchableOpacity onPress={() => Linking.openURL(auth.termsUrl!)}>
+          <Text style={styles.termsLink}>View full community guidelines</Text>
+        </TouchableOpacity>
+      )}
+
+      <TouchableOpacity
+        style={styles.agreeButton}
+        onPress={async () => {
+          try {
+            await auth.acceptTerms();
+            // auth.termsAccepted flips to true; re-render shows chat
+          } catch {
+            Alert.alert('Error', 'Could not save your response. Please try again.');
+          }
+        }}
+      >
+        <Text>I Agree</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => auth.logout()}>
+        <Text style={styles.cancelLink}>Cancel / Sign out</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+```
+
+**Key points:**
+
+- `termsUrl` links to the space's community guidelines. Open with `Linking.openURL(auth.termsUrl)`.
+- Call `auth.acceptTerms()` when the user confirms. On success, `auth.termsAccepted` flips to `true` and the screen re-renders to chat.
+- Always provide a "Cancel / Sign out" path that calls `auth.logout()`. The user must not be trapped on the terms screen without a way to exit.
+- **Mid-session re-acceptance:** `termsAccepted` is re-evaluated on every AT refresh (approximately every 30 minutes, or immediately on app resume after inactivity). If a space admin bumps `termsVersion`, `termsAccepted` will flip to `false` on the next refresh. Add a belt-and-suspenders guard in your chat screen to disable input when `!auth.termsAccepted`:
+
+  ```tsx
+  // In your chat screen — belt-and-suspenders guard
+  const canChat = auth.status === 'authenticated' && auth.termsAccepted;
+  ```
+
+- **Enabling terms on an existing space:** If a space starts without terms and later enables them, all existing users will have `termsAccepted = false` on their next auth or refresh. Handle this the same way as first-time acceptance.
 
 #### Server-initiated session revocation
 

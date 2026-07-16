@@ -396,3 +396,192 @@ describe('useRelayaAuth', () => {
     expect(runtime.result.getToken()).toBe(atNew);
   });
 });
+
+describe('useRelayaAuth — terms acceptance', () => {
+  it('exposes termsAccepted=false and termsUrl from verifyCode response when space requires terms', async () => {
+    const storage = makeStorage();
+    const at = jwt(30 * 60_000);
+    installFetch((path) =>
+      path === '/auth/verify-code'
+        ? jsonResponse({
+            accessToken: at,
+            refreshToken: 'rt-verified',
+            user,
+            station,
+            termsAccepted: false,
+            termsUrl: 'https://example.com/terms',
+            termsVersion: '2026-07',
+          })
+        : jsonResponse({})
+    );
+    const runtime = renderAuth(storage);
+    runtimes.push(runtime);
+    await waitFor(runtime, () => runtime.result.status === 'anonymous');
+
+    await runtime.result.verifyCode('pending-1', '123456');
+    await flush(runtime);
+
+    expect(runtime.result.status).toBe('authenticated');
+    expect(runtime.result.termsAccepted).toBe(false);
+    expect(runtime.result.termsUrl).toBe('https://example.com/terms');
+    expect(runtime.result.termsVersion).toBe('2026-07');
+  });
+
+  it('exposes termsAccepted=true when space does not require terms', async () => {
+    const storage = makeStorage();
+    const at = jwt(30 * 60_000);
+    installFetch((path) =>
+      path === '/auth/verify-code'
+        ? jsonResponse({
+            accessToken: at,
+            refreshToken: 'rt-verified',
+            user,
+            station,
+            termsAccepted: true,
+            termsUrl: null,
+            termsVersion: null,
+          })
+        : jsonResponse({})
+    );
+    const runtime = renderAuth(storage);
+    runtimes.push(runtime);
+    await waitFor(runtime, () => runtime.result.status === 'anonymous');
+
+    await runtime.result.verifyCode('pending-1', '123456');
+    await flush(runtime);
+
+    expect(runtime.result.termsAccepted).toBe(true);
+    expect(runtime.result.termsUrl).toBeNull();
+    expect(runtime.result.termsVersion).toBeNull();
+  });
+
+  it('defaults termsAccepted=true when server omits terms fields (backward compat)', async () => {
+    const storage = makeStorage();
+    const at = jwt(30 * 60_000);
+    installFetch((path) =>
+      path === '/auth/verify-code'
+        ? jsonResponse({ accessToken: at, refreshToken: 'rt-verified', user, station })
+        : jsonResponse({})
+    );
+    const runtime = renderAuth(storage);
+    runtimes.push(runtime);
+    await waitFor(runtime, () => runtime.result.status === 'anonymous');
+
+    await runtime.result.verifyCode('pending-1', '123456');
+    await flush(runtime);
+
+    expect(runtime.result.termsAccepted).toBe(true);
+  });
+
+  it('re-evaluates terms on AT refresh and flips termsAccepted to false when admin bumps version', async () => {
+    // Start with a near-expired AT from mount-restore so AppState active triggers a real refresh
+    const storage = makeStorage('rt-old');
+    const atNearExpiry = jwt(119_000); // within 2-min threshold — treated as stale
+    const atFresh = jwt(30 * 60_000);
+    let refreshCount = 0;
+    installFetch((path) => {
+      if (path === '/auth/refresh') {
+        refreshCount += 1;
+        if (refreshCount === 1) {
+          // Mount-restore: authenticated with termsAccepted=true, near-expired AT
+          return jsonResponse({
+            accessToken: atNearExpiry,
+            refreshToken: 'rt-new',
+            termsAccepted: true,
+            termsUrl: 'https://example.com/terms',
+            termsVersion: '2026-07',
+          });
+        }
+        // AppState-triggered refresh: admin bumped termsVersion
+        return jsonResponse({
+          accessToken: atFresh,
+          refreshToken: 'rt-new-2',
+          termsAccepted: false,
+          termsUrl: 'https://example.com/terms',
+          termsVersion: '2026-08',
+        });
+      }
+      if (path === `/api/chat/${SPACE_SLUG}/me`) return jsonResponse({ userId: user.id, displayName: user.displayName, permissions: user.permissions, roles: user.roles });
+      if (path === `/api/chat/stations/${SPACE_SLUG}`) return jsonResponse(station);
+      throw new Error(`unexpected ${path}`);
+    });
+    const runtime = renderAuth(storage);
+    runtimes.push(runtime);
+
+    await waitFor(runtime, () => runtime.result.status === 'authenticated');
+    expect(runtime.result.termsAccepted).toBe(true);
+
+    // AppState active fires ensureFreshToken; AT is near-expired so a refresh is triggered
+    appStateMock.emit('active');
+    await flush(runtime);
+
+    // After second refresh, terms state is updated from the response
+    expect(runtime.result.termsAccepted).toBe(false);
+    expect(runtime.result.termsVersion).toBe('2026-08');
+  });
+
+  it('acceptTerms() POSTs to the server and flips termsAccepted to true in state', async () => {
+    const storage = makeStorage();
+    const at = jwt(30 * 60_000);
+    const fetchMock = installFetch((path) => {
+      if (path === '/auth/verify-code')
+        return jsonResponse({
+          accessToken: at,
+          refreshToken: 'rt-verified',
+          user,
+          station,
+          termsAccepted: false,
+          termsUrl: 'https://example.com/terms',
+          termsVersion: '2026-07',
+        });
+      if (path === `/${SPACE_SLUG}/terms/accept` || path.endsWith('/terms/accept'))
+        return jsonResponse({ ok: true });
+      return jsonResponse({});
+    });
+    const runtime = renderAuth(storage);
+    runtimes.push(runtime);
+    await waitFor(runtime, () => runtime.result.status === 'anonymous');
+
+    await runtime.result.verifyCode('pending-1', '123456');
+    await flush(runtime);
+    expect(runtime.result.termsAccepted).toBe(false);
+
+    await runtime.result.acceptTerms();
+    await flush(runtime);
+
+    expect(runtime.result.termsAccepted).toBe(true);
+    const acceptCall = fetchMock.mock.calls.find(([url]) => String(url).endsWith('/terms/accept'));
+    expect(acceptCall).toBeDefined();
+    expect(acceptCall![1]?.method).toBe('POST');
+  });
+
+  it('acceptTerms() throws when the server returns an error', async () => {
+    const storage = makeStorage();
+    const at = jwt(30 * 60_000);
+    installFetch((path) => {
+      if (path === '/auth/verify-code')
+        return jsonResponse({
+          accessToken: at,
+          refreshToken: 'rt-verified',
+          user,
+          station,
+          termsAccepted: false,
+          termsUrl: 'https://example.com/terms',
+          termsVersion: '2026-07',
+        });
+      if (path.endsWith('/terms/accept'))
+        return jsonResponse({ error: { message: 'Not configured' } }, 400);
+      return jsonResponse({});
+    });
+    const runtime = renderAuth(storage);
+    runtimes.push(runtime);
+    await waitFor(runtime, () => runtime.result.status === 'anonymous');
+
+    await runtime.result.verifyCode('pending-1', '123456');
+    await flush(runtime);
+
+    await expect(runtime.result.acceptTerms()).rejects.toThrow();
+    // State should not flip when server returns an error
+    expect(runtime.result.termsAccepted).toBe(false);
+  });
+});
