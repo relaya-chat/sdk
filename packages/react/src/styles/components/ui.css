@@ -76,7 +76,7 @@
 
 /* ── Modal ─────────────────────────────────────────────────── */
 .relaya-root .modal-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
@@ -150,4 +150,89 @@
   display: flex;
   gap: var(--spacing-sm);
   justify-content: flex-end;
+}
+
+/* ── Gravatar Modal ─────────────────────────────────────────── */
+.relaya-root .gravatar-modal {
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.relaya-root .gravatar-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.relaya-root .gravatar-modal__body {
+  overflow-y: auto;
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.relaya-root .gravatar-modal__section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.relaya-root .gravatar-modal__section-title {
+  font-size: var(--relaya-font-size-sm);
+  font-weight: 600;
+  color: var(--relaya-color-text-muted);
+  margin-bottom: var(--spacing-sm);
+}
+
+.relaya-root .gravatar-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.relaya-root .gravatar-modal__thumb {
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: var(--relaya-radius-sm);
+  padding: var(--spacing-xs);
+}
+
+.relaya-root .gravatar-modal__thumb--selected {
+  border-color: var(--relaya-color-accent);
+}
+
+.relaya-root .gravatar-modal__img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--relaya-radius-sm);
+  display: block;
+}
+
+.relaya-root .gravatar-modal__img-label {
+  font-size: 10px;
+  color: var(--relaya-color-text-muted);
+  margin-top: var(--spacing-xs);
+  text-align: center;
+}
+
+.relaya-root .gravatar-modal__style-option {
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: var(--relaya-radius-sm);
+  padding: var(--spacing-sm);
+  text-align: center;
+}
+
+.relaya-root .gravatar-modal__style-option:hover {
+  background: var(--relaya-color-surface-2);
+}
+
+.relaya-root .gravatar-modal__style-icon {
+  font-size: 32px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.relaya-root .gravatar-modal__style-label {
+  font-size: 11px;
+  color: var(--relaya-color-text-muted);
 }

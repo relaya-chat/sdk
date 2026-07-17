@@ -111,29 +111,13 @@
 }
 
 /* ── Auth Modal ────────────────────────────────────────────── */
-/* Auth modal uses higher z-index (1000+) to ensure it appears above all chat UI.
-   Standard modals (chat name, ban, report) use z-index 100-199. */
-.relaya-root .modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  animation: fadeIn 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
+/* The auth modal uses the shared .modal-overlay class (defined in ui.css)
+   for its backdrop and centering. The .auth-modal wrapper provides the
+   centered flex container for the auth-specific content. */
 .relaya-root .auth-modal {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 1001;
+  z-index: 101;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -8,6 +8,7 @@
   display: flex;
   flex-direction: column;
   background: var(--relaya-color-bg);
+  position: relative;
 }
 
 .relaya-root .chat-window {
