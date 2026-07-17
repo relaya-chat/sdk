@@ -191,16 +191,76 @@ function makeOptions(overrides: Partial<RelayaChatOptions> = {}): RelayaChatOpti
 
 // ── Setup / Teardown ──────────────────────────────────────────────────────────
 
+function makeFetchMock(soundsResponse?: { mentionSoundUrl: string; channelSoundUrl: string }) {
+  return vi.fn(async (url: string) => {
+    const u = String(url);
+    if (u.includes('/sounds')) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => soundsResponse ?? { mentionSoundUrl: null, channelSoundUrl: null },
+      };
+    }
+    if (u.includes('/stations/')) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 'st-1', stationId: 'st-1', name: 'Test', slug: 'test-station', description: null, isActive: true, headerName: null, signInLabel: null, hideDeletedMessages: false }),
+      };
+    }
+    return { ok: true, status: 200, json: async () => ({ messages: [], hasMore: false }) };
+  });
+}
+
 beforeEach(() => {
   mockConnect.mockReset();
   mockClose.mockReset();
   appStateMock.reset();
-  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ messages: [], hasMore: false }) })));
+  vi.stubGlobal('fetch', makeFetchMock());
 });
 
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+});
+
+// ── Test: sound URL fetch on mount ───────────────────────────────────────────
+
+describe('sound URL fetch on mount', () => {
+  it('stores mentionSoundUrl and channelSoundUrl in state after getSounds resolves', async () => {
+    const mentionUrl = 'https://api.relaya.chat/assets/sounds/mention.mp3';
+    const channelUrl = 'https://api.relaya.chat/assets/sounds/channel.mp3';
+    vi.stubGlobal('fetch', makeFetchMock({ mentionSoundUrl: mentionUrl, channelSoundUrl: channelUrl }));
+
+    const options = makeOptions({ allowAnonymous: true });
+    const runtime = new HookRuntime(() => useRelayaChat(options));
+    runtime.render();
+    await flush(runtime);
+
+    expect(runtime.result.mentionSoundUrl).toBe(mentionUrl);
+    expect(runtime.result.channelSoundUrl).toBe(channelUrl);
+
+    runtime.unmount();
+  });
+
+  it('leaves sound URLs null when getSounds fetch fails', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      if (String(url).includes('/sounds')) {
+        return { ok: false, status: 500, json: async () => ({}) };
+      }
+      return { ok: true, status: 200, json: async () => ({ messages: [], hasMore: false }) };
+    }));
+
+    const options = makeOptions({ allowAnonymous: true });
+    const runtime = new HookRuntime(() => useRelayaChat(options));
+    runtime.render();
+    await flush(runtime);
+
+    expect(runtime.result.mentionSoundUrl).toBeNull();
+    expect(runtime.result.channelSoundUrl).toBeNull();
+
+    runtime.unmount();
+  });
 });
 
 // ── Test: allowAnonymous: false ───────────────────────────────────────────────

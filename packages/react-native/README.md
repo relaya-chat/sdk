@@ -201,6 +201,9 @@ Returns `RelayaChatState & RelayaChatActions`.
 | `allowAnonymous` | `boolean` | `true` | When `true`, anonymous users connect in read-only mode. Set `false` to require sign-in before any connection. |
 | `backgroundDisconnectDelayMs` | `number` | `180000` | Time (ms) before closing the WebSocket after the app backgrounds. Short app switches within this window preserve the existing connection. On foreground after a long absence, `ensureFreshToken()` is called and the connection is reopened. |
 | `apiKey` | `string` | — | Per-space API key. Sent as `X-Relaya-Api-Key` on REST requests and appended as `?apiKey=` on the WebSocket upgrade URL. Pass the same key provided to `useRelayaAuth`. |
+| `onStickersUpdated` | `() => void` | — | Called when the server notifies that the sticker library changed. Use this to refresh your local sticker picker state. |
+| `onMentionNotification` | `() => void` | — | Called when the server sends a `mention:notification` for the current user (someone @mentioned them). Use this to trigger audio playback via `expo-av`. The sound URL is available in `mentionSoundUrl`. |
+| `onChannelNotification` | `() => void` | — | Called when the server sends a `channel:notification` (@channel mention). Use this to trigger audio playback via `expo-av`. The sound URL is available in `channelSoundUrl`. |
 
 #### `RelayaChatState`
 
@@ -217,7 +220,41 @@ Returns `RelayaChatState & RelayaChatActions`.
 | `hasOlderMessages` | `boolean` | Whether more history is available to load. |
 | `blockedUserIds` | `string[]` | IDs of users the current user has blocked. Empty array for anonymous/unauthenticated users. Use this to visually distinguish blocked users' messages and to show an unblock affordance. |
 | `hideDeletedMessages` | `boolean` | When `true`, the space admin has configured deleted messages to be hidden from non-moderator users. See [Rendering deleted messages](#rendering-deleted-messages). |
+| `mentionSoundUrl` | `string \| null` | URL of the sound to play on @mention notifications. Fetched from the server on mount. Always non-null after first successful fetch (falls back to the server-bundled default). Use with `onMentionNotification`. |
+| `channelSoundUrl` | `string \| null` | URL of the sound to play on @channel notifications. Always non-null after first successful fetch. Use with `onChannelNotification`. |
 | `error` | `string \| null` | Last error message. |
+
+#### Audio notifications
+
+The SDK fires `onMentionNotification` and `onChannelNotification` when the server sends a `mention:notification` or `channel:notification` WebSocket event. The sound URLs (`mentionSoundUrl`, `channelSoundUrl`) are fetched automatically on mount from `GET /api/chat/:slug/sounds`. The server always returns a URL - either a space-specific custom file uploaded by the admin, or the server-bundled default - so these will always be populated after mount.
+
+The SDK does not play audio. Your app uses `expo-av` (or equivalent) in the callback:
+
+```tsx
+import { Audio } from 'expo-av';
+
+const chat = useRelayaChat({
+  serverUrl: 'https://api.relaya.chat',
+  spaceSlug: 'your-space-slug',
+  authState: auth,
+  getToken: auth.getToken,
+  ensureFreshToken: auth.ensureFreshToken,
+  onMentionNotification: () => {
+    if (chat.mentionSoundUrl) {
+      Audio.Sound.createAsync({ uri: chat.mentionSoundUrl })
+        .then(({ sound }) => sound.playAsync());
+    }
+  },
+  onChannelNotification: () => {
+    if (chat.channelSoundUrl) {
+      Audio.Sound.createAsync({ uri: chat.channelSoundUrl })
+        .then(({ sound }) => sound.playAsync());
+    }
+  },
+});
+```
+
+If you don't pass these callbacks, no audio plays. There is nothing else to configure - the sound URLs and notification events are handled entirely by the SDK.
 
 #### Rendering deleted messages
 
