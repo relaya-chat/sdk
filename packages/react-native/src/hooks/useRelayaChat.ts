@@ -99,6 +99,18 @@ export interface RelayaChatOptions {
   apiKey?: string;
   /** Called when the server notifies that the sticker library changed (stickers:updated WS event). */
   onStickersUpdated?: () => void;
+  /**
+   * Called when the server sends a mention:notification for the current user.
+   * Use this to trigger audio playback (e.g. via expo-av) using the URL from
+   * mentionSoundUrl in RelayaChatState.
+   */
+  onMentionNotification?: () => void;
+  /**
+   * Called when the server sends a channel:notification (@channel mention).
+   * Use this to trigger audio playback (e.g. via expo-av) using the URL from
+   * channelSoundUrl in RelayaChatState.
+   */
+  onChannelNotification?: () => void;
 }
 
 export interface RelayaChatState {
@@ -122,6 +134,16 @@ export interface RelayaChatState {
    * "Message removed" placeholder regardless of this setting.
    */
   hideDeletedMessages: boolean;
+  /**
+   * URL of the sound to play on @mention notifications. Always set (defaults to the
+   * server-bundled mention.mp3). Use with onMentionNotification to play audio via expo-av.
+   */
+  mentionSoundUrl: string | null;
+  /**
+   * URL of the sound to play on @channel notifications. Always set (defaults to the
+   * server-bundled channel.mp3). Use with onChannelNotification to play audio via expo-av.
+   */
+  channelSoundUrl: string | null;
   error: string | null;
 }
 
@@ -175,6 +197,8 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
     hasOlderMessages: false,
     blockedUserIds: [],
     hideDeletedMessages: false,
+    mentionSoundUrl: null,
+    channelSoundUrl: null,
     error: null,
   });
 
@@ -186,6 +210,9 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
   const blockedUserIdsRef = useRef<Set<string>>(new Set());
   // Latest onStickersUpdated callback from options, refreshed every render
   const onStickersUpdatedRef = useRef<(() => void) | undefined>(options.onStickersUpdated);
+  // Audio notification callbacks — refreshed every render via the keep-refs effect
+  const onMentionNotificationRef = useRef<(() => void) | undefined>(options.onMentionNotification);
+  const onChannelNotificationRef = useRef<(() => void) | undefined>(options.onChannelNotification);
 
   // Ref-backed guard for loadOlderMessages — avoids stale closure behavior
   const loadingOlderRef = useRef(false);
@@ -286,6 +313,8 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
     oldestMessageIdRef,
     onStickersUpdatedRef,
     blockedUserIdsRef,
+    onMentionNotificationRef,
+    onChannelNotificationRef,
   };
 
   const handleWsMessage = useCallback(
@@ -313,6 +342,8 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
     handleWsMessageRef.current = handleWsMessage;
     handleStatusChangeRef.current = handleStatusChange;
     onStickersUpdatedRef.current = options.onStickersUpdated;
+    onMentionNotificationRef.current = options.onMentionNotification;
+    onChannelNotificationRef.current = options.onChannelNotification;
   });
 
   // ── Fetch station info on mount / slug change ──────────────────────────────
@@ -327,6 +358,26 @@ export function useRelayaChat(options: RelayaChatOptions): RelayaChatState & Rel
         setState((prev) => ({ ...prev, hideDeletedMessages: info.hideDeletedMessages ?? false }));
       })
       .catch(() => { /* non-critical — default false keeps "Message removed" placeholder */ });
+  }, [api, stationSlug]);
+
+  // ── Fetch sound URLs on mount / slug change ────────────────────────────────
+  // Populates mentionSoundUrl and channelSoundUrl from the server. The server
+  // always returns a URL (defaulting to its bundled assets), so these will
+  // always be non-null after a successful fetch. Store them in state so the
+  // host app can pass them to expo-av (or similar) when a notification callback fires.
+  // Non-critical: a fetch failure leaves both URLs null (no audio plays).
+
+  useEffect(() => {
+    if (!stationSlug) return;
+    api.getSounds(stationSlug)
+      .then((result) => {
+        setState((prev) => ({
+          ...prev,
+          mentionSoundUrl: result.mentionSoundUrl,
+          channelSoundUrl: result.channelSoundUrl,
+        }));
+      })
+      .catch(() => { /* non-critical — audio notifications simply won't play */ });
   }, [api, stationSlug]);
 
   // ── Connect / disconnect when auth changes ─────────────────────────────────

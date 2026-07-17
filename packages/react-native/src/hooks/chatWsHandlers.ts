@@ -38,6 +38,10 @@ export interface WsHandlerRefs {
   onStickersUpdatedRef: MutableRefObject<(() => void) | undefined>;
   /** Mutable set of user IDs blocked by the current user (updated by blockUser/unblockUser). */
   blockedUserIdsRef: MutableRefObject<Set<string>>;
+  /** Called when the server sends a mention:notification for the current user. Host app plays audio. */
+  onMentionNotificationRef: MutableRefObject<(() => void) | undefined>;
+  /** Called when the server sends a channel:notification (@channel mention). Host app plays audio. */
+  onChannelNotificationRef: MutableRefObject<(() => void) | undefined>;
 }
 
 /**
@@ -201,9 +205,14 @@ export function createWsMessageHandler(
         refs.onStickersUpdatedRef.current?.();
         break;
 
-      // mention:notification and channel:notification — host app handles audio
       case 'mention:notification':
+        refs.onMentionNotificationRef.current?.();
+        break;
+
       case 'channel:notification':
+        refs.onChannelNotificationRef.current?.();
+        break;
+
       default:
         break;
     }
