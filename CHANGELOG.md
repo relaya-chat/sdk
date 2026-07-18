@@ -10,6 +10,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`@relaya-chat/react-native`** — Audio notifications for `@mention` and `@channel` events. New `onMentionNotification` and `onChannelNotification` callbacks on `RelayaChatOptions` fire when the server sends the corresponding WebSocket events. New `mentionSoundUrl` and `channelSoundUrl` fields on `RelayaChatState` are populated on mount from `GET /api/chat/:slug/sounds`; the server always returns a URL (space-specific custom file or bundled default), so these are always non-null after a successful fetch. The SDK does not play audio — your app supplies an `expo-av` (or equivalent) handler in the callbacks. Requires Relaya server v1.7.0 or later for custom sounds; falls back gracefully (callbacks still fire, URLs still populated with server defaults) on earlier versions.
+
+### Fixed
+
+- **`@relaya-chat/react`** — All six modals (`ChatNameEditor`, `BanModal`, `ReportModal`, `UserListModal`, `AuthModal`, `GravatarStyleModal`) now center within the widget container at any embed width. Previously modals used `position: fixed` and were positioned relative to the viewport, causing them to appear off-screen or misaligned when the widget was embedded as a narrow column alongside other page content. Changed to `position: absolute` with a `position: relative` positioning context on `.relaya-root .app`; `GravatarStyleModal` refactored from inline fixed-position styles to the standard `modal-overlay + modal` CSS class pattern.
+
 ---
 
 ## [2.0.0-beta.6] — 2026-07-16
@@ -21,6 +29,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`@relaya-chat/react`** — `TermsAcceptanceScreen` component gated in `RelayaChat.tsx`: authenticated users who have not accepted the current space ToS see the terms screen before chat is shown. The screen displays the terms URL as a link and a single "I agree" button that calls `acceptTerms()`.
 
 - **`@relaya-chat/react-native`** — `termsAccepted`, `termsUrl`, and `termsVersion` exposed on `useRelayaAuth` state; `acceptTerms()` exposed on `useRelayaChat`. Headless - host app is responsible for rendering the terms acceptance UI when `!auth.termsAccepted && auth.termsUrl`.
+
+---
+
+## [2.0.0-beta.5] — 2026-07-03
 
 ### Fixed
 
@@ -245,3 +257,7 @@ Initial public release of the Relaya Chat SDK.
 - `@relaya-chat/react` — Drop-in `<RelayaChat>` compound component, individual hooks
   (`useRelayaAuth`, `useRelayaChat`, `useSpaceTheme`, and more), admin panel components
 - `@relaya-chat/react-native` — React Native primitives (types, `ApiClient`, `ChatConnection`)
+
+### Notes
+
+- **`@relaya-chat/react`** — Audio notifications and mute control ship as built-in behavior. Authenticated users see a bell icon (mute toggle) in the chat header. The `AudioNotification` component fetches per-space sound URLs from `GET /api/chat/:slug/sounds` on mount and plays them via the Web Audio API when the server sends `mention:notification` or `channel:notification` WebSocket events. `@mention` notifications always play regardless of the mute setting (direct personal alert); `@channel` notifications also punch through mute (admin-only, treated as high-priority). The mute toggle suppresses sounds for users who prefer silence; state is in-memory only (resets on reload). Custom sounds for a space are configured by space admins in the relaya.chat dashboard; the server falls back to bundled defaults when no custom sound is set. Requires Relaya server v1.7.0 or later for custom sound upload support; default sounds and notification events work on all server versions.
