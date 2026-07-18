@@ -8,6 +8,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.0.0-beta.8] — 2026-07-18
+
+### Fixed
+
+- **`@relaya-chat/react`** — Gravatar style selection now shows the correct image after a selection is made. Previously the selected style was not applied correctly, causing the wrong avatar image to be displayed after choosing a gravatar style.
+
+---
+
 ## [2.0.0-beta.7] — 2026-07-17
 
 ### Added
