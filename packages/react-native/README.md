@@ -436,6 +436,66 @@ const menuItems = getMessageMenuItems({
 
 ---
 
+### Avatar preference utilities
+
+The SDK exports helper functions for managing the user's avatar preference. Use these instead of constructing Gravatar URLs client-side.
+
+**Why not construct URLs client-side?**
+Gravatar's v3 REST API returns gallery image URLs with **MD5** hashes, but the Relaya server builds avatar URLs using **SHA-256** hashes (derived from the user's email). These are different hash values for the same email address, so a URL constructed from a gallery hash will display a different image than the one the server would produce. Always let the server build the URL.
+
+#### Gravatar-generated style
+
+```tsx
+import { setAvatarPreferenceStyle } from '@relaya-chat/react-native';
+
+// Valid styleId values: 'identicon' | 'monsterid' | 'retro' | 'wavatar' | 'robohash' | 'mp'
+await setAvatarPreferenceStyle(serverUrl, spaceSlug, getToken, 'wavatar');
+```
+
+The server resolves the user's email, computes the correct SHA-256 hash, and stores a properly formed Gravatar URL.
+
+#### User's uploaded gravatar.com photo
+
+```tsx
+import {
+  fetchGravatarGallery,
+  setAvatarPreferenceGravatarPhoto,
+} from '@relaya-chat/react-native';
+
+// Fetch the user's uploaded photos
+const photos = await fetchGravatarGallery(serverUrl, spaceSlug, getToken);
+
+// photos[0].url comes directly from the Gravatar API - pass it as-is
+await setAvatarPreferenceGravatarPhoto(serverUrl, spaceSlug, getToken, photos[0].url);
+```
+
+Do not extract the hash from gallery photo URLs to construct generated-style URLs - that hash is MD5 (wrong type for style URLs).
+
+#### Default gravatar / initials
+
+```tsx
+import {
+  setAvatarPreferenceDefault,
+  setAvatarPreferenceInitials,
+} from '@relaya-chat/react-native';
+
+// Reset to the user's default gravatar (server derives hash from email)
+await setAvatarPreferenceDefault(serverUrl, spaceSlug, getToken);
+
+// Show initials instead of any avatar image
+await setAvatarPreferenceInitials(serverUrl, spaceSlug, getToken);
+```
+
+#### Building a gravatar picker
+
+When building a gravatar-style picker UI:
+1. Call `fetchGravatarGallery` to get the user's uploaded photos - display them in the upper section
+2. Show a hardcoded list of generated style options (identicon, monsterid, retro, wavatar, robohash, mp) in the lower section
+3. For style previews, you may construct preview URLs using the hash from a gallery photo URL (MD5) - this is fine for display only
+4. **On selection:** call `setAvatarPreferenceStyle(styleId)` - never pass the preview URL to the server
+
+---
+
 ## Mounting strategy
 
 Mount `useRelayaAuth` in an app-level layout or provider component so the in-memory AT/RT state persists across navigation. If auth is mounted inside a screen component, it will re-initialize (and re-read secure storage) on every screen mount.

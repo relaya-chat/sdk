@@ -83,9 +83,11 @@ export default function GravatarStyleModal({
   };
 
   const handleGeneratedStyleClick = (styleId: string) => {
-    // TODO: Construct Gravatar URL with ?d=styleId parameter
-    const styleUrl = `https://www.gravatar.com/avatar/HASH?d=${styleId}&s=96`;
-    setSelectedUrl(styleUrl);
+    // Pass the bare style code (e.g. 'identicon'). The server builds the correct
+    // Gravatar URL from the user's email hash. Never construct the URL client-side:
+    // Gravatar's API returns MD5 hashes in gallery URLs but the server uses SHA-256,
+    // so any client-side URL construction would use the wrong hash.
+    setSelectedUrl(styleId);
   };
 
   return (

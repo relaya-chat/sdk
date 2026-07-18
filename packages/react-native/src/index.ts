@@ -36,3 +36,13 @@ export type {
   MessageMenuItems,
   MessageMenuOpts,
 } from './utils/getMessageMenuItems';
+
+// ── Avatar preference utilities ───────────────────────────────────────────────
+export {
+  fetchGravatarGallery,
+  setAvatarPreferenceStyle,
+  setAvatarPreferenceGravatarPhoto,
+  setAvatarPreferenceDefault,
+  setAvatarPreferenceInitials,
+} from './utils/avatarApi';
+export type { GravatarGalleryEntry } from './utils/avatarApi';
